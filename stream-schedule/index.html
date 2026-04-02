@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>配信スケジュールメーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Kosugi+Maru&family=M+PLUS+1p:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@400;700&family=Zen+Maru+Gothic:wght@400;700&family=Zen+Old+Mincho:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -462,6 +465,17 @@ input[type="color"] {
           <label>テキスト色</label>
           <input type="color" id="colorText" value="#ffffff">
         </div>
+        <label>フォント</label>
+        <select id="fontSelect" style="margin-bottom:8px;">
+          <option value="'Noto Sans JP', sans-serif">Noto Sans JP（ゴシック）</option>
+          <option value="'M PLUS Rounded 1c', sans-serif">M PLUS Rounded（丸ゴシック）</option>
+          <option value="'M PLUS 1p', sans-serif">M PLUS 1p（モダン）</option>
+          <option value="'Zen Maru Gothic', sans-serif">Zen 丸ゴシック</option>
+          <option value="'Kosugi Maru', sans-serif">小杉丸ゴシック</option>
+          <option value="'Noto Serif JP', serif">Noto Serif JP（明朝）</option>
+          <option value="'Zen Old Mincho', serif">Zen Old 明朝</option>
+          <option value="'DotGothic16', sans-serif">DotGothic16（ドット）</option>
+        </select>
         <label>背景画像（任意）</label>
         <div class="row" style="margin-bottom:8px; align-items:center;">
           <label class="opt-btn" style="flex:0 auto; cursor:pointer; margin:0; text-align:center;" id="bgImgBtn">画像を選択</label>
@@ -537,6 +551,7 @@ let canvasW = 1920, canvasH = 1080;
 let bgPattern = 'cyber';
 let bgImg = null;
 let bgOverlayPct = 45;
+let canvasFont = "'Noto Sans JP', sans-serif";
 let avatarImg = null;
 let charImg = null;
 let sideMode = 'memo'; // 'none', 'memo', 'character', 'both'
@@ -1799,6 +1814,10 @@ document.getElementById('weekStart').addEventListener('change', initSchedule);
 });
 ['colorMain','colorBar','colorText'].forEach(id => {
   document.getElementById(id).addEventListener('input', renderCanvas);
+});
+document.getElementById('fontSelect').addEventListener('change', e => {
+  canvasFont = e.target.value;
+  renderCanvas();
 });
 
 document.getElementById('downloadBtn').addEventListener('click', () => {
