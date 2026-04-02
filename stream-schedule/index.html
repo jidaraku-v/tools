@@ -349,6 +349,65 @@ input[type="color"] {
   margin: 4px 0;
 }
 
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+.modal-overlay.show {
+  display: flex;
+}
+.modal-content {
+  background: #1a1830;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  color: #ddd;
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+.modal-content h2 {
+  font-size: 1.2rem;
+  color: #a78bfa;
+  margin-bottom: 16px;
+}
+.modal-content h3 {
+  font-size: 0.95rem;
+  color: #a78bfa;
+  margin: 16px 0 6px;
+}
+.modal-content ol, .modal-content ul {
+  padding-left: 20px;
+  margin-bottom: 8px;
+}
+.modal-content li {
+  margin-bottom: 4px;
+}
+.modal-content p {
+  margin-bottom: 8px;
+}
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.modal-close:hover { color: #fff; }
+
 .preview-help {
   font-size: 0.78rem;
   color: #666;
@@ -525,8 +584,59 @@ input[type="color"] {
     <div class="action-bar">
       <button class="btn btn-primary" id="downloadBtn">画像をダウンロード</button>
       <button class="btn btn-secondary" id="resetBtn">リセット</button>
+      <button class="btn btn-secondary" id="helpBtn">ヘルプ</button>
+      <button class="btn btn-secondary" id="downloadAppBtn">このツールをDL</button>
     </div>
     <p class="preview-help">配信ブロックをドラッグで別の曜日へ移動 ／ 右クリックでコピー・削除メニュー</p>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal-content">
+    <button class="modal-close" id="helpClose">&times;</button>
+    <h2>配信スケジュールメーカー ヘルプ</h2>
+
+    <h3>基本的な使い方</h3>
+    <ol>
+      <li>「基本設定」で配信者名・サブタイトル・SNS IDなどを入力</li>
+      <li>「配信予定」で各曜日の「+ 配信を追加」をクリック</li>
+      <li>配信タイトル・時間・タグを入力するとプレビューに反映</li>
+      <li>「画像をダウンロード」でPNG画像として保存</li>
+    </ol>
+
+    <h3>テーマ・カスタマイズ</h3>
+    <ul>
+      <li>8種類のカラーテーマから選択可能</li>
+      <li>メイン色・バー色・テキスト色を個別にカスタマイズ</li>
+      <li>フォントは8種類から選択（Google Fonts）</li>
+      <li>背景画像をアップロードし、透過率を調整可能</li>
+      <li>7種類の背景パターンを重ねて表示可能</li>
+    </ul>
+
+    <h3>右サイドゾーン</h3>
+    <ul>
+      <li>「メモ」- 今週の目標やお知らせなどを表示</li>
+      <li>「立ち絵」- VTuberの立ち絵画像を配置</li>
+      <li>「両方」- メモと立ち絵を同時に表示</li>
+      <li>幅はスライダーで10%〜40%に調整可能</li>
+    </ul>
+
+    <h3>強調ラベル</h3>
+    <p>各配信の「強調ラベル」欄にテキストを入力すると、ブロック右上に斜めリボンで表示されます（例：コラボ！、初見プレイ）。グロー効果＋グラデーションで目立つ表示になります。</p>
+
+    <h3>プレビュー上の操作</h3>
+    <ul>
+      <li><strong>ドラッグ</strong> - 配信ブロックを別の曜日へ移動</li>
+      <li><strong>右クリック</strong> - コピー・削除・上下移動メニュー</li>
+    </ul>
+
+    <h3>データの保存</h3>
+    <p>入力内容はブラウザのlocalStorageに自動保存されます。次回開いた時に復元されます。「リセット」ボタンで全データを初期化できます。</p>
+    <p>※ アイコン・立ち絵・背景画像はlocalStorageには保存されません。</p>
+
+    <h3>オフラインで使う</h3>
+    <p>「このツールをDL」ボタンからHTMLファイルをダウンロードすると、ネット環境がなくてもローカルで使用できます（フォント選択のみオンライン必要）。</p>
   </div>
 </div>
 
@@ -1863,6 +1973,27 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   renderThemeButtons();
   initWeekStart();
   initSchedule();
+});
+
+// ========== Help & Download App ==========
+document.getElementById('helpBtn').addEventListener('click', () => {
+  document.getElementById('helpModal').classList.add('show');
+});
+document.getElementById('helpClose').addEventListener('click', () => {
+  document.getElementById('helpModal').classList.remove('show');
+});
+document.getElementById('helpModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+});
+
+document.getElementById('downloadAppBtn').addEventListener('click', () => {
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html' });
+  const link = document.createElement('a');
+  link.download = 'stream-schedule-maker.html';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
 });
 
 // ========== Canvas drag & menu ==========
