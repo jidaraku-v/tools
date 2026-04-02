@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tools Collection</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0a0e1a;
+  color: #eee;
+  font-family: 'Noto Sans JP', 'Yu Gothic', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+}
+h1 {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  letter-spacing: 0.05em;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 800px;
+  width: 100%;
+}
+.card {
+  background: linear-gradient(135deg, #161e3a, #1a2444);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 32px 28px;
+  text-decoration: none;
+  color: #eee;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(100,140,255,0.15);
+}
+.card h2 {
+  font-size: 1.25rem;
+  margin-bottom: 10px;
+}
+.card p {
+  font-size: 0.9rem;
+  color: #99a;
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+<h1>Tools Collection</h1>
+<div class="grid">
+  <a class="card" href="quiz-panel/index.html">
+    <h2>クイズパネルボード</h2>
+    <p>パネル形式のクイズゲーム</p>
+  </a>
+  <a class="card" href="stream-schedule/index.html">
+    <h2>配信スケジュールメーカー</h2>
+    <p>VTuber向け週間配信スケジュール画像を作成</p>
+  </a>
+</div>
+</body>
+</html>
