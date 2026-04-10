@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アイコンメーカー</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+}
+h1 {
+  font-size: 1.6rem;
+  color: #e94560;
+  text-align: center;
+}
+.main-area {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 1100px;
+}
+.canvas-container {
+  position: relative;
+  flex-shrink: 0;
+}
+#preview-canvas {
+  background: repeating-conic-gradient(#333 0% 25%, #444 0% 50%) 50% / 20px 20px;
+  border-radius: 12px;
+  cursor: grab;
+  touch-action: none;
+}
+#preview-canvas:active { cursor: grabbing; }
+
+.controls {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 280px;
+  max-width: 340px;
+  flex: 1;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.control-group label {
+  font-size: 0.85rem;
+  color: #a0a0c0;
+  font-weight: 600;
+}
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.control-row input[type="range"] { flex: 1; }
+.control-row .value-label {
+  font-size: 0.8rem;
+  color: #888;
+  min-width: 40px;
+  text-align: right;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  height: 6px;
+  background: #2a2a4a;
+  border-radius: 3px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  background: #e94560;
+  border-radius: 50%;
+  cursor: pointer;
+}
+input[type="color"] {
+  width: 40px; height: 32px;
+  border: 2px solid #333;
+  border-radius: 6px;
+  cursor: pointer;
+  background: none;
+  padding: 2px;
+}
+select, button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+select {
+  background: #2a2a4a;
+  color: #e0e0e0;
+}
+.btn {
+  background: #e94560;
+  color: #fff;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.btn:hover { background: #c73a52; }
+.btn-secondary {
+  background: #2a2a4a;
+  color: #e0e0e0;
+}
+.btn-secondary:hover { background: #3a3a5a; }
+.upload-area {
+  border: 2px dashed #444;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  font-size: 0.85rem;
+  color: #888;
+}
+.upload-area:hover { border-color: #e94560; }
+.btn-row {
+  display: flex;
+  gap: 8px;
+}
+.btn-row button { flex: 1; }
+.section-title {
+  font-size: 0.95rem;
+  color: #e94560;
+  border-bottom: 1px solid #2a2a4a;
+  padding-bottom: 4px;
+  margin-top: 4px;
+}
+.bg-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.bg-option {
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  border: 2px solid transparent;
+  cursor: pointer;
+  background: #2a2a4a;
+  color: #ccc;
+  transition: all 0.15s;
+}
+.bg-option.active {
+  border-color: #e94560;
+  color: #fff;
+}
+.size-presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.size-preset {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  background: #2a2a4a;
+  color: #ccc;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+.size-preset.active { border-color: #e94560; color: #fff; }
+.hint {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 2px;
+}
+input[type="number"].num-input {
+  width: 60px;
+  background: #2a2a4a;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 0.8rem;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+input[type="number"].num-input::-webkit-inner-spin-button,
+input[type="number"].num-input::-webkit-outer-spin-button {
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>アイコンメーカー</h1>
+
+  <div class="main-area">
+    <div class="canvas-container">
+      <canvas id="preview-canvas" width="500" height="500"></canvas>
+    </div>
+
+    <div class="controls">
+      <div class="section-title">画像</div>
+      <div class="upload-area" id="upload-char">
+        クリックまたはドラッグ&ドロップで<br>キャラ画像をアップロード
+        <input type="file" accept="image/*" id="file-char" hidden>
+      </div>
+      <p class="hint">ドラッグで移動 / スクロールで拡大縮小 / Shift+ドラッグで回転</p>
+
+      <div class="control-group">
+        <label>拡大率</label>
+        <div class="control-row">
+          <input type="range" id="scale" min="10" max="500" value="100">
+          <span class="value-label" id="scale-val">100%</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>回転</label>
+        <div class="control-row">
+          <input type="range" id="rotation" min="-180" max="180" value="0">
+          <input type="number" class="num-input" id="rotation-num" min="-180" max="180" value="0">
+          <span class="value-label">°</span>
+        </div>
+      </div>
+
+      <div class="section-title">円の枠</div>
+      <div class="control-group">
+        <label>枠の色</label>
+        <div class="control-row">
+          <input type="color" id="border-color" value="#e94560">
+        </div>
+      </div>
+      <div class="control-group">
+        <label>枠の太さ</label>
+        <div class="control-row">
+          <input type="range" id="border-width" min="0" max="40" value="6">
+          <span class="value-label" id="border-width-val">6px</span>
+        </div>
+      </div>
+
+      <div class="section-title">円の内側の背景</div>
+      <div class="bg-options">
+        <div class="bg-option active" data-bg="transparent">透過</div>
+        <div class="bg-option" data-bg="color">単色</div>
+        <div class="bg-option" data-bg="image">画像</div>
+      </div>
+      <div class="control-group" id="bg-color-group" style="display:none;">
+        <label>背景色</label>
+        <div class="control-row">
+          <input type="color" id="bg-color" value="#ffffff">
+        </div>
+      </div>
+      <div id="bg-image-group" style="display:none;">
+        <div class="upload-area" id="upload-bg">
+          背景画像をアップロード
+          <input type="file" accept="image/*" id="file-bg" hidden>
+        </div>
+        <div class="control-group" style="margin-top:8px;">
+          <label>背景画像の透過度</label>
+          <div class="control-row">
+            <input type="range" id="bg-opacity" min="0" max="100" value="100">
+            <span class="value-label" id="bg-opacity-val">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">名前テキスト</div>
+      <div class="control-group">
+        <label>名前</label>
+        <input type="text" id="name-text" placeholder="表示名を入力..." style="background:#2a2a4a;color:#e0e0e0;border:1px solid #444;border-radius:6px;padding:6px 10px;font-size:0.9rem;">
+      </div>
+      <p class="hint">名前はキャンバス上でドラッグして移動できます（円の外にも配置可能）</p>
+      <div class="control-group">
+        <label>フォントサイズ</label>
+        <div class="control-row">
+          <input type="range" id="name-font-size" min="12" max="120" value="48">
+          <span class="value-label" id="name-font-size-val">48px</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>文字色</label>
+        <div class="control-row">
+          <input type="color" id="name-color" value="#ffffff">
+        </div>
+      </div>
+      <div class="control-group">
+        <label>縁取り</label>
+        <div class="control-row">
+          <label style="font-size:0.8rem;display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="name-stroke-check" checked> 有効
+          </label>
+        </div>
+      </div>
+      <div id="name-stroke-group">
+        <div class="control-group">
+          <label>縁取り色</label>
+          <div class="control-row">
+            <input type="color" id="name-stroke-color" value="#000000">
+          </div>
+        </div>
+        <div class="control-group">
+          <label>縁取り太さ</label>
+          <div class="control-row">
+            <input type="range" id="name-stroke-width" min="1" max="12" value="4">
+            <span class="value-label" id="name-stroke-width-val">4px</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">出力</div>
+      <div class="control-group">
+        <label>出力サイズ</label>
+        <div class="size-presets">
+          <div class="size-preset" data-size="200">200px</div>
+          <div class="size-preset" data-size="400" >400px</div>
+          <div class="size-preset active" data-size="500">500px</div>
+          <div class="size-preset" data-size="800">800px</div>
+          <div class="size-preset" data-size="1024">1024px</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="export-png">PNG保存</button>
+        <button class="btn btn-secondary" id="export-jpg">JPG保存</button>
+      </div>
+      <button class="btn btn-secondary" id="reset-btn">リセット</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('preview-canvas');
+const ctx = canvas.getContext('2d');
+const CANVAS_SIZE = 500;
+
+const state = {
+  charImg: null,
+  bgImg: null,
+  x: 0, y: 0,
+  scale: 1,
+  rotation: 0,
+  borderColor: '#e94560',
+  borderWidth: 6,
+  bgMode: 'transparent',
+  bgColor: '#ffffff',
+  bgOpacity: 1,
+  nameText: '',
+  nameFontSize: 48,
+  nameX: 0,
+  nameY: 170,
+  nameColor: '#ffffff',
+  nameStroke: true,
+  nameStrokeColor: '#000000',
+  nameStrokeWidth: 4,
+  outputSize: 500,
+};
+
+// --- Drawing ---
+function draw() {
+  ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  const cx = CANVAS_SIZE / 2;
+  const cy = CANVAS_SIZE / 2;
+  const borderW = state.borderWidth;
+  const radius = (CANVAS_SIZE / 2) - (borderW / 2) - 2;
+  const innerRadius = radius - borderW / 2;
+
+  ctx.save();
+
+  // Clip to circle for inner content
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+
+  // Background
+  if (state.bgMode === 'color') {
+    ctx.fillStyle = state.bgColor;
+    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  } else if (state.bgMode === 'image' && state.bgImg) {
+    const img = state.bgImg;
+    const s = Math.max(CANVAS_SIZE / img.width, CANVAS_SIZE / img.height);
+    const w = img.width * s;
+    const h = img.height * s;
+    ctx.globalAlpha = state.bgOpacity;
+    ctx.drawImage(img, (CANVAS_SIZE - w) / 2, (CANVAS_SIZE - h) / 2, w, h);
+    ctx.globalAlpha = 1;
+  }
+
+  // Character image
+  if (state.charImg) {
+    const img = state.charImg;
+    ctx.save();
+    ctx.translate(cx + state.x, cy + state.y);
+    ctx.rotate(state.rotation * Math.PI / 180);
+    ctx.scale(state.scale, state.scale);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    ctx.restore();
+  }
+
+  ctx.restore();
+
+  // Border
+  if (borderW > 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = state.borderColor;
+    ctx.lineWidth = borderW;
+    ctx.stroke();
+  }
+
+  // Name text (outside clip - can overflow circle)
+  if (state.nameText) {
+    drawNameText(ctx, CANVAS_SIZE, 1);
+  }
+}
+
+function drawNameText(c, size, s) {
+  const fontSize = state.nameFontSize * s;
+  c.font = `bold ${fontSize}px 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif`;
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  const tx = (size / 2) + state.nameX * s;
+  const ty = (size / 2) + state.nameY * s;
+  if (state.nameStroke) {
+    c.strokeStyle = state.nameStrokeColor;
+    c.lineWidth = state.nameStrokeWidth * s;
+    c.lineJoin = 'round';
+    c.strokeText(state.nameText, tx, ty);
+  }
+  c.fillStyle = state.nameColor;
+  c.fillText(state.nameText, tx, ty);
+}
+
+function getNameTextBounds() {
+  if (!state.nameText) return null;
+  ctx.font = `bold ${state.nameFontSize}px 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif`;
+  const metrics = ctx.measureText(state.nameText);
+  const w = metrics.width;
+  const h = state.nameFontSize;
+  const tx = (CANVAS_SIZE / 2) + state.nameX;
+  const ty = (CANVAS_SIZE / 2) + state.nameY;
+  return { x: tx - w / 2, y: ty - h / 2, w, h };
+}
+
+// --- Controls ---
+const scaleSlider = document.getElementById('scale');
+const rotationSlider = document.getElementById('rotation');
+const borderColorInput = document.getElementById('border-color');
+const borderWidthSlider = document.getElementById('border-width');
+const bgColorInput = document.getElementById('bg-color');
+
+scaleSlider.addEventListener('input', () => {
+  state.scale = scaleSlider.value / 100;
+  document.getElementById('scale-val').textContent = scaleSlider.value + '%';
+  draw();
+});
+const rotationNum = document.getElementById('rotation-num');
+rotationSlider.addEventListener('input', () => {
+  state.rotation = +rotationSlider.value;
+  rotationNum.value = rotationSlider.value;
+  draw();
+});
+rotationNum.addEventListener('input', () => {
+  let v = parseInt(rotationNum.value, 10);
+  if (isNaN(v)) return;
+  v = Math.max(-180, Math.min(180, v));
+  state.rotation = v;
+  rotationSlider.value = v;
+  draw();
+});
+rotationNum.addEventListener('change', () => {
+  let v = parseInt(rotationNum.value, 10);
+  if (isNaN(v)) v = 0;
+  v = Math.max(-180, Math.min(180, v));
+  rotationNum.value = v;
+  state.rotation = v;
+  rotationSlider.value = v;
+  draw();
+});
+borderColorInput.addEventListener('input', () => { state.borderColor = borderColorInput.value; draw(); });
+borderWidthSlider.addEventListener('input', () => {
+  state.borderWidth = +borderWidthSlider.value;
+  document.getElementById('border-width-val').textContent = borderWidthSlider.value + 'px';
+  draw();
+});
+bgColorInput.addEventListener('input', () => { state.bgColor = bgColorInput.value; draw(); });
+
+const bgOpacitySlider = document.getElementById('bg-opacity');
+bgOpacitySlider.addEventListener('input', () => {
+  state.bgOpacity = bgOpacitySlider.value / 100;
+  document.getElementById('bg-opacity-val').textContent = bgOpacitySlider.value + '%';
+  draw();
+});
+
+// Name text controls
+const nameTextInput = document.getElementById('name-text');
+const nameFontSizeSlider = document.getElementById('name-font-size');
+const nameColorInput = document.getElementById('name-color');
+const nameStrokeCheck = document.getElementById('name-stroke-check');
+const nameStrokeColorInput = document.getElementById('name-stroke-color');
+const nameStrokeWidthSlider = document.getElementById('name-stroke-width');
+
+nameTextInput.addEventListener('input', () => { state.nameText = nameTextInput.value; draw(); });
+nameFontSizeSlider.addEventListener('input', () => {
+  state.nameFontSize = +nameFontSizeSlider.value;
+  document.getElementById('name-font-size-val').textContent = nameFontSizeSlider.value + 'px';
+  draw();
+});
+nameColorInput.addEventListener('input', () => { state.nameColor = nameColorInput.value; draw(); });
+nameStrokeCheck.addEventListener('change', () => {
+  state.nameStroke = nameStrokeCheck.checked;
+  document.getElementById('name-stroke-group').style.display = nameStrokeCheck.checked ? '' : 'none';
+  draw();
+});
+nameStrokeColorInput.addEventListener('input', () => { state.nameStrokeColor = nameStrokeColorInput.value; draw(); });
+nameStrokeWidthSlider.addEventListener('input', () => {
+  state.nameStrokeWidth = +nameStrokeWidthSlider.value;
+  document.getElementById('name-stroke-width-val').textContent = nameStrokeWidthSlider.value + 'px';
+  draw();
+});
+
+// Background mode
+document.querySelectorAll('.bg-option').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.bg-option').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    state.bgMode = el.dataset.bg;
+    document.getElementById('bg-color-group').style.display = state.bgMode === 'color' ? '' : 'none';
+    document.getElementById('bg-image-group').style.display = state.bgMode === 'image' ? '' : 'none';
+    draw();
+  });
+});
+
+// Output size
+document.querySelectorAll('.size-preset').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.size-preset').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    state.outputSize = +el.dataset.size;
+  });
+});
+
+// File upload helpers
+function loadImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function setupUpload(areaId, fileId, callback) {
+  const area = document.getElementById(areaId);
+  const input = document.getElementById(fileId);
+  area.addEventListener('click', () => input.click());
+  input.addEventListener('change', (e) => {
+    if (e.target.files[0]) callback(e.target.files[0]);
+  });
+  area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.borderColor = '#e94560'; });
+  area.addEventListener('dragleave', () => { area.style.borderColor = ''; });
+  area.addEventListener('drop', (e) => {
+    e.preventDefault();
+    area.style.borderColor = '';
+    if (e.dataTransfer.files[0]) callback(e.dataTransfer.files[0]);
+  });
+}
+
+setupUpload('upload-char', 'file-char', async (file) => {
+  state.charImg = await loadImage(file);
+  // Auto-fit image
+  const img = state.charImg;
+  const fitScale = Math.min(CANVAS_SIZE / img.width, CANVAS_SIZE / img.height);
+  state.scale = fitScale;
+  state.x = 0; state.y = 0; state.rotation = 0;
+  scaleSlider.value = Math.round(fitScale * 100);
+  document.getElementById('scale-val').textContent = scaleSlider.value + '%';
+  rotationSlider.value = 0;
+  rotationNum.value = 0;
+  draw();
+});
+
+setupUpload('upload-bg', 'file-bg', async (file) => {
+  state.bgImg = await loadImage(file);
+  draw();
+});
+
+// --- Drag interaction ---
+let dragging = false;
+let dragTarget = 'image'; // 'image' | 'name'
+let dragStart = { x: 0, y: 0 };
+let startPos = { x: 0, y: 0 };
+let startRotation = 0;
+let isRotating = false;
+
+function canvasToLocal(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = CANVAS_SIZE / rect.width;
+  const scaleY = CANVAS_SIZE / rect.height;
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY,
+  };
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  dragging = true;
+  isRotating = e.shiftKey;
+  dragStart = { x: e.clientX, y: e.clientY };
+
+  // Hit-test name text first
+  const pos = canvasToLocal(e);
+  const bounds = getNameTextBounds();
+  if (bounds && pos.x >= bounds.x - 8 && pos.x <= bounds.x + bounds.w + 8
+      && pos.y >= bounds.y - 8 && pos.y <= bounds.y + bounds.h + 8) {
+    dragTarget = 'name';
+    startPos = { x: state.nameX, y: state.nameY };
+  } else {
+    dragTarget = 'image';
+    startPos = { x: state.x, y: state.y };
+    startRotation = state.rotation;
+  }
+  canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (!dragging) return;
+  const dx = e.clientX - dragStart.x;
+  const dy = e.clientY - dragStart.y;
+
+  if (dragTarget === 'name') {
+    state.nameX = startPos.x + dx;
+    state.nameY = startPos.y + dy;
+  } else if (isRotating) {
+    state.rotation = startRotation + dx * 0.5;
+    state.rotation = Math.max(-180, Math.min(180, state.rotation));
+    rotationSlider.value = Math.round(state.rotation);
+    rotationNum.value = Math.round(state.rotation);
+  } else {
+    state.x = startPos.x + dx;
+    state.y = startPos.y + dy;
+  }
+  draw();
+});
+
+canvas.addEventListener('pointerup', () => { dragging = false; });
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -5 : 5;
+  const newVal = Math.max(10, Math.min(500, +scaleSlider.value + delta));
+  scaleSlider.value = newVal;
+  state.scale = newVal / 100;
+  document.getElementById('scale-val').textContent = newVal + '%';
+  draw();
+}, { passive: false });
+
+// Touch pinch zoom
+let lastTouchDist = 0;
+canvas.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    lastTouchDist = Math.sqrt(dx * dx + dy * dy);
+  }
+}, { passive: true });
+canvas.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const delta = (dist - lastTouchDist) * 0.5;
+    const newVal = Math.max(10, Math.min(500, +scaleSlider.value + delta));
+    scaleSlider.value = newVal;
+    state.scale = newVal / 100;
+    document.getElementById('scale-val').textContent = Math.round(newVal) + '%';
+    lastTouchDist = dist;
+    draw();
+  }
+}, { passive: false });
+
+// --- Export ---
+function renderExportCanvas() {
+  const size = state.outputSize;
+  const offscreen = document.createElement('canvas');
+  offscreen.width = size;
+  offscreen.height = size;
+  const octx = offscreen.getContext('2d');
+  const scale = size / CANVAS_SIZE;
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const borderW = state.borderWidth * scale;
+  const radius = (size / 2) - (borderW / 2) - (2 * scale);
+  const innerRadius = radius - borderW / 2;
+
+  octx.save();
+  octx.beginPath();
+  octx.arc(cx, cy, innerRadius, 0, Math.PI * 2);
+  octx.closePath();
+  octx.clip();
+
+  if (state.bgMode === 'color') {
+    octx.fillStyle = state.bgColor;
+    octx.fillRect(0, 0, size, size);
+  } else if (state.bgMode === 'image' && state.bgImg) {
+    const img = state.bgImg;
+    const s = Math.max(size / img.width, size / img.height);
+    const w = img.width * s;
+    const h = img.height * s;
+    octx.globalAlpha = state.bgOpacity;
+    octx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+    octx.globalAlpha = 1;
+  }
+
+  if (state.charImg) {
+    const img = state.charImg;
+    octx.save();
+    octx.translate(cx + state.x * scale, cy + state.y * scale);
+    octx.rotate(state.rotation * Math.PI / 180);
+    octx.scale(state.scale * scale, state.scale * scale);
+    octx.drawImage(img, -img.width / 2, -img.height / 2);
+    octx.restore();
+  }
+
+  octx.restore();
+
+  if (borderW > 0) {
+    octx.beginPath();
+    octx.arc(cx, cy, radius, 0, Math.PI * 2);
+    octx.strokeStyle = state.borderColor;
+    octx.lineWidth = borderW;
+    octx.stroke();
+  }
+
+  if (state.nameText) {
+    drawNameText(octx, size, scale);
+  }
+
+  return offscreen;
+}
+
+async function exportImage(format) {
+  const offscreen = renderExportCanvas();
+  const size = state.outputSize;
+
+  let blob;
+  if (format === 'png') {
+    blob = await new Promise(r => offscreen.toBlob(r, 'image/png'));
+  } else {
+    const jpgCanvas = document.createElement('canvas');
+    jpgCanvas.width = size;
+    jpgCanvas.height = size;
+    const jctx = jpgCanvas.getContext('2d');
+    jctx.fillStyle = '#ffffff';
+    jctx.fillRect(0, 0, size, size);
+    jctx.drawImage(offscreen, 0, 0);
+    blob = await new Promise(r => jpgCanvas.toBlob(r, 'image/jpeg', 0.95));
+  }
+
+  const ext = format === 'png' ? 'png' : 'jpg';
+  const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
+
+  // Use File System Access API (save dialog) if available
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await showSaveFilePicker({
+        suggestedName: `icon.${ext}`,
+        types: [{
+          description: format === 'png' ? 'PNG画像' : 'JPEG画像',
+          accept: { [mimeType]: [`.${ext}`] },
+        }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return; // user cancelled
+    }
+  }
+
+  // Fallback: normal download
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = `icon.${ext}`;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('export-png').addEventListener('click', () => exportImage('png'));
+document.getElementById('export-jpg').addEventListener('click', () => exportImage('jpg'));
+
+// Reset
+document.getElementById('reset-btn').addEventListener('click', () => {
+  state.charImg = null;
+  state.bgImg = null;
+  state.x = 0; state.y = 0;
+  state.scale = 1; state.rotation = 0;
+  state.borderColor = '#e94560'; state.borderWidth = 6;
+  state.bgMode = 'transparent'; state.bgColor = '#ffffff'; state.bgOpacity = 1;
+  state.nameText = ''; state.nameFontSize = 48;
+  state.nameX = 0; state.nameY = 170;
+  state.nameColor = '#ffffff'; state.nameStroke = true;
+  state.nameStrokeColor = '#000000'; state.nameStrokeWidth = 4;
+  nameTextInput.value = ''; nameFontSizeSlider.value = 48;
+  nameColorInput.value = '#ffffff'; nameStrokeCheck.checked = true;
+  nameStrokeColorInput.value = '#000000'; nameStrokeWidthSlider.value = 4;
+  document.getElementById('name-font-size-val').textContent = '48px';
+  document.getElementById('name-stroke-width-val').textContent = '4px';
+  document.getElementById('name-stroke-group').style.display = '';
+  scaleSlider.value = 100; rotationSlider.value = 0; rotationNum.value = 0;
+  borderColorInput.value = '#e94560'; borderWidthSlider.value = 6;
+  bgColorInput.value = '#ffffff'; bgOpacitySlider.value = 100;
+  document.getElementById('scale-val').textContent = '100%';
+  document.getElementById('bg-opacity-val').textContent = '100%';
+  document.getElementById('border-width-val').textContent = '6px';
+  document.querySelectorAll('.bg-option').forEach(e => e.classList.remove('active'));
+  document.querySelector('[data-bg="transparent"]').classList.add('active');
+  document.getElementById('bg-color-group').style.display = 'none';
+  document.getElementById('bg-image-group').style.display = 'none';
+  draw();
+});
+
+// Initial draw
+draw();
+</script>
+</body>
+</html>
