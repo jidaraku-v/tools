@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ミリしら妄想</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;}
+#app{width:100%;height:100%;position:relative;}
+
+:root{
+  --bg1:#1a1a2e;--bg2:#16213e;--bg-panel:#0f3460;--bg-card:#1a1a3e;--bg-input:#16213e;
+  --c1:#e0e0e0;--c2:#a0a0b0;--ca:#c9a84c;--border:#3a3a5e;--accent:#c9a84c;
+  --glow:rgba(201,168,76,.3);--btn-bg:#c9a84c;--btn-c:#1a1a2e;
+  --shadow:0 4px 20px rgba(0,0,0,.5);
+  --font-h:'Georgia',serif;--font-b:'Segoe UI','Meiryo',sans-serif;--radius:6px;
+  --node-bg:#2a2a4e;--node-border:#c9a84c;--edge-c:#c9a84c;
+}
+
+.app{width:100%;height:100%;background:var(--bg1);color:var(--c1);font-family:var(--font-b);display:flex;flex-direction:column;overflow:hidden;}
+
+/* ===== Title Screen ===== */
+.title-screen{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.title-box{width:560px;padding:44px;background:var(--bg-panel);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+.title-box h1{font-family:var(--font-h);font-size:36px;color:var(--ca);text-align:center;margin-bottom:6px;}
+.title-sub{text-align:center;color:var(--c2);font-size:14px;margin-bottom:32px;}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:18px;}
+.fg label{font-size:13px;font-weight:bold;color:var(--ca);}
+.fg input{padding:11px 14px;font-size:17px;font-family:var(--font-b);background:var(--bg-input);color:var(--c1);border:2px solid var(--border);border-radius:var(--radius);outline:none;}
+.fg input:focus{border-color:var(--accent);}
+.start-btn{width:100%;padding:16px;font-size:22px;font-weight:bold;font-family:var(--font-h);background:var(--btn-bg);color:var(--btn-c);border:none;border-radius:var(--radius);cursor:pointer;box-shadow:var(--shadow);transition:all .2s;}
+.start-btn:hover{opacity:.9;transform:translateY(-2px);}
+.start-btn:disabled{opacity:.35;cursor:default;transform:none;}
+
+/* ===== Toolbar ===== */
+.toolbar{display:flex;align-items:center;gap:8px;padding:5px 14px;background:var(--bg2);border-bottom:2px solid var(--border);height:48px;flex-shrink:0;z-index:100;}
+.tb-logo{font-family:var(--font-h);font-size:12px;color:var(--c2);white-space:nowrap;border:1px solid var(--border);border-radius:4px;padding:2px 8px;}
+.tb-work{font-family:var(--font-h);font-size:22px;color:var(--ca);margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px;}
+.tb-group{display:flex;gap:3px;}
+.tb-btn{padding:5px 12px;font-size:12px;font-family:var(--font-b);background:var(--bg-panel);color:var(--c1);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;white-space:nowrap;transition:all .15s;user-select:none;}
+.tb-btn:hover{border-color:var(--accent);color:var(--ca);}
+.tb-btn.active{background:var(--accent);color:var(--btn-c);border-color:var(--accent);}
+.tb-btn.danger{border-color:#ff1744;color:#ff1744;}
+.tb-btn.danger:hover{background:#ff1744;color:#fff;}
+.panel-zoom-group{display:flex;gap:2px;align-items:center;}
+.panel-zoom-btn{padding:2px 7px;font-size:11px;font-family:var(--font-b);background:var(--bg-card);color:var(--c2);border:1px solid var(--border);border-radius:4px;cursor:pointer;user-select:none;min-width:24px;}
+.panel-zoom-btn:hover{border-color:var(--accent);color:var(--ca);}
+.panel-zoom-reset{min-width:40px;}
+
+/* ===== Panel Area ===== */
+.panel-area{position:relative;flex:1;overflow:hidden;background:#05080f;}
+.panel{position:absolute;background:var(--bg-panel);border:1px solid #c9a84c;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 0 1px #000, 0 4px 16px rgba(0,0,0,.5);}
+.panel[data-pid="relationship"]{background:#152848;}
+.panel[data-pid="characters"]{background:#1a3a2e;}
+.panel[data-pid="story"]{background:#3a1f2e;}
+.panel[data-pid="memo"]{background:#3a2e18;}
+.panel[data-pid="relationship"] .panel-hdr{background:#0a1830;border-bottom-color:#5a8acc;}
+.panel[data-pid="characters"] .panel-hdr{background:#0c241b;border-bottom-color:#5cc9a0;}
+.panel[data-pid="story"] .panel-hdr{background:#23101a;border-bottom-color:#cc6e8a;}
+.panel[data-pid="memo"] .panel-hdr{background:#231b0a;border-bottom-color:#ccaa55;}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--accent);cursor:grab;user-select:none;flex-shrink:0;min-height:34px;}
+.panel-hdr:active{cursor:grabbing;}
+.panel-hdr-left{display:flex;align-items:center;gap:6px;pointer-events:none;}
+.panel-icon{font-size:16px;}
+.panel-title{font-family:var(--font-h);font-size:14px;color:var(--ca);}
+.panel-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px;position:relative;}
+.panel-body::-webkit-scrollbar{width:5px;}
+.panel-body::-webkit-scrollbar-track{background:var(--bg2);}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.panel.drag-over{outline:3px solid var(--accent);outline-offset:-3px;}
+.panel-expand-btn{padding:2px 8px;font-size:11px;font-family:var(--font-b);background:var(--bg-card);color:var(--c2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;user-select:none;}
+.panel-expand-btn:hover{border-color:var(--accent);color:var(--ca);}
+
+/* ===== Dividers ===== */
+.divider{position:absolute;z-index:50;background:transparent;}
+.divider-v{width:8px;cursor:col-resize;top:0;bottom:0;}
+.divider-v::after{content:'';position:absolute;left:3px;top:0;bottom:0;width:2px;background:#c9a84c;transition:background .15s;}
+.divider-v:hover::after{background:#fff;}
+.divider-h{height:8px;cursor:row-resize;left:0;right:0;}
+.divider-h::after{content:'';position:absolute;top:3px;left:0;right:0;height:2px;background:#c9a84c;transition:background .15s;}
+.divider-h:hover::after{background:#fff;}
+
+/* ===== Relationship SVG ===== */
+.rf-panel .panel-body{padding:0;overflow:hidden;}
+.rf-svg{width:100%;height:100%;display:block;}
+.rf-node{cursor:grab;user-select:none;}
+.rf-node:active{cursor:grabbing;}
+.rf-node>rect.rf-node-rect{stroke-width:2;rx:8;ry:8;transition:stroke-width .1s;}
+.rf-node:hover>rect.rf-node-rect{stroke-width:3;}
+.rf-node text{font-family:var(--font-h);font-size:15px;pointer-events:none;dominant-baseline:central;text-anchor:middle;}
+.rf-edge path.rf-edge-vis{fill:none;stroke-width:2;}
+.rf-edge path.rf-edge-hit{fill:none;stroke:transparent;stroke-width:14;cursor:pointer;}
+.rf-edge text{font-size:12px;font-family:var(--font-b);dominant-baseline:central;text-anchor:middle;cursor:pointer;pointer-events:auto;}
+.rf-edge-bg{fill:var(--bg-panel);opacity:.9;cursor:pointer;}
+.rf-temp-line{stroke:var(--accent);stroke-width:2;stroke-dasharray:8 4;pointer-events:none;}
+.rf-connecting{cursor:crosshair !important;}
+.rf-connecting .rf-node{cursor:crosshair !important;}
+.rf-handle{fill:var(--bg-panel);stroke:var(--accent);stroke-width:2;cursor:crosshair;opacity:0;transition:opacity .12s;}
+.rf-node:hover .rf-handle{opacity:1;}
+.rf-handle:hover{fill:var(--accent);}
+
+/* ===== Relationship Groups (organizations) ===== */
+.rf-group-shape{pointer-events:none;transition:fill-opacity .15s;}
+.rf-group:hover .rf-group-shape{fill-opacity:.18;}
+.rf-group-hit{fill:none;stroke:transparent;stroke-width:18;pointer-events:stroke;cursor:move;}
+.rf-group-label{font-family:var(--font-h);font-size:16px;font-weight:bold;dominant-baseline:hanging;text-anchor:start;cursor:move;user-select:none;}
+.rf-group-resize{cursor:nwse-resize;}
+
+/* ===== Context Menu ===== */
+.ctx-menu{position:fixed;background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);z-index:9999;min-width:150px;padding:4px 0;display:none;}
+.ctx-menu.show{display:block;}
+.ctx-item{padding:7px 14px;font-size:13px;color:var(--c1);cursor:pointer;transition:background .1s;}
+.ctx-item:hover{background:var(--glow);color:var(--ca);}
+.ctx-sep{height:1px;background:var(--border);margin:3px 0;}
+.ctx-colors{display:flex;gap:4px;padding:6px 14px;flex-wrap:wrap;}
+.ctx-color{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .15s;}
+.ctx-color:hover{transform:scale(1.2);}
+.ctx-color.sel{border-color:#fff;box-shadow:0 0 6px rgba(255,255,255,.4);}
+
+/* ===== Popup (small floating dialog) ===== */
+.popup{position:fixed;background:var(--bg-panel);border:2px solid var(--accent);border-radius:var(--radius);padding:16px;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:8000;min-width:280px;max-width:360px;}
+.popup h4{font-family:var(--font-h);font-size:16px;color:var(--ca);margin-bottom:10px;}
+.popup-label{font-size:12px;color:var(--c2);margin-bottom:3px;}
+.popup-input{width:100%;padding:8px 10px;font-size:15px;font-family:var(--font-b);background:var(--bg-input);color:var(--c1);border:2px solid var(--border);border-radius:var(--radius);outline:none;margin-bottom:8px;}
+.popup-input:focus{border-color:var(--accent);}
+.popup-input::placeholder{color:var(--c2);}
+.popup-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+.popup-btn{padding:7px 18px;font-size:13px;font-family:var(--font-b);border:none;border-radius:var(--radius);cursor:pointer;transition:all .15s;}
+.popup-btn-ok{background:var(--btn-bg);color:var(--btn-c);}
+.popup-btn-ok:hover{opacity:.85;}
+.popup-btn-cancel{background:var(--bg-input);color:var(--c1);border:1px solid var(--border);}
+.popup-btn-cancel:hover{border-color:var(--accent);}
+
+/* ===== Character List ===== */
+.char-add{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:12px;font-size:16px;font-family:var(--font-b);background:var(--bg-card);color:var(--ca);border:2px dashed var(--border);border-radius:var(--radius);cursor:pointer;margin-bottom:10px;transition:all .2s;}
+.char-add:hover{border-color:var(--accent);background:var(--glow);}
+.char-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;position:relative;}
+.char-card-top{display:flex;gap:8px;margin-bottom:8px;align-items:center;}
+.char-name{flex:1;padding:6px 8px;font-size:22px;font-weight:bold;font-family:var(--font-h);background:transparent;color:var(--c1);border:none;border-bottom:2px solid var(--border);outline:none;}
+.char-name:focus{border-color:var(--accent);}
+.char-role{padding:6px 10px;font-size:15px;font-family:var(--font-b);background:var(--bg-input);color:var(--c1);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;}
+.char-del{position:absolute;top:8px;right:8px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--border);border-radius:50%;color:var(--c2);cursor:pointer;font-size:13px;transition:all .2s;}
+.char-del:hover{border-color:#ff1744;color:#ff1744;background:rgba(255,23,68,.1);}
+.char-desc{width:100%;padding:8px 10px;font-size:17px;line-height:1.6;font-family:var(--font-b);background:var(--bg-input);color:var(--c1);border:1px solid var(--border);border-radius:var(--radius);resize:vertical;min-height:60px;outline:none;}
+.char-desc:focus{border-color:var(--accent);}
+
+/* ===== Node Tooltip ===== */
+.node-tooltip{position:fixed;background:var(--bg-panel);border:1px solid var(--accent);border-radius:var(--radius);padding:10px 14px;box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:7000;max-width:300px;pointer-events:none;font-size:14px;line-height:1.5;color:var(--c1);}
+.node-tooltip .tt-name{font-family:var(--font-h);font-size:16px;font-weight:bold;color:var(--ca);margin-bottom:4px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.node-tooltip .tt-role{font-size:11px;font-weight:normal;color:var(--c2);font-family:var(--font-b);padding:1px 6px;border:1px solid var(--border);border-radius:3px;}
+.node-tooltip .tt-desc{font-size:13px;color:var(--c1);}
+
+/* ===== Story ===== */
+.story-prog{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:8px 12px;background:var(--bg-card);border-radius:var(--radius);}
+.story-prog .bar-bg{flex:1;height:12px;background:var(--bg-input);border-radius:6px;overflow:hidden;}
+.story-prog .bar-fill{height:100%;background:var(--accent);transition:width .5s;border-radius:6px;}
+.story-prog .bar-pct{font-size:16px;font-weight:bold;color:var(--ca);}
+.story-prog .bar-label{font-size:13px;color:var(--c2);}
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0;}
+.story-block{display:flex;flex-direction:column;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.story-block-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border);}
+.story-label{font-family:var(--font-h);font-size:24px;font-weight:bold;color:var(--ca);min-width:30px;}
+.story-dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:all .3s;flex-shrink:0;}
+.story-dot.on{background:var(--accent);box-shadow:0 0 8px var(--glow);}
+.story-desc{font-size:13px;color:var(--c2);}
+.story-ta{flex:1;width:100%;padding:12px;font-size:18px;line-height:1.7;font-family:var(--font-b);background:transparent;color:var(--c1);border:none;resize:none;outline:none;}
+.story-ta::placeholder{color:var(--c2);opacity:.5;}
+
+/* ===== Memo ===== */
+.memo-btns{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+.memo-type-btn{padding:6px 10px;font-size:11px;font-family:var(--font-b);border:2px solid;border-radius:var(--radius);cursor:pointer;background:transparent;transition:all .2s;}
+.memo-type-btn:hover{opacity:.8;transform:translateY(-1px);}
+.mt-memo{border-color:#ffb74d;color:#ffb74d;}
+.mt-quote{border-color:#40c4ff;color:#40c4ff;}
+.mt-question{border-color:#69f0ae;color:#69f0ae;}
+.memo-grid{display:flex;flex-wrap:wrap;gap:7px;align-content:flex-start;}
+.memo-card{width:calc(50% - 4px);padding:9px;border-radius:var(--radius);background:var(--bg-card);border:1px solid var(--border);position:relative;min-height:60px;}
+.mc-memo{border-left:4px solid #ffb74d;background:rgba(255,183,77,.08);}
+.mc-quote{border-left:4px solid #40c4ff;background:rgba(64,196,255,.08);}
+.mc-question{border-left:4px solid #69f0ae;background:rgba(105,240,174,.08);}
+.memo-card-type{font-size:10px;font-weight:bold;margin-bottom:4px;opacity:.8;}
+.memo-card-text{width:100%;min-height:36px;padding:3px;font-size:12px;font-family:var(--font-b);background:transparent;color:var(--c1);border:none;outline:none;resize:vertical;}
+.memo-card-del{position:absolute;top:3px;right:3px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--c2);cursor:pointer;font-size:10px;border-radius:50%;transition:all .2s;}
+.memo-card-del:hover{color:#ff1744;background:rgba(255,23,68,.1);}
+
+/* ===== Reset Modal ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:10000;}
+.modal{background:var(--bg-panel);border:2px solid var(--border);border-radius:var(--radius);padding:28px;min-width:340px;box-shadow:var(--shadow);}
+.modal h3{font-family:var(--font-h);font-size:18px;color:var(--ca);margin-bottom:12px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<div id="ctx-menu" class="ctx-menu"></div>
+<div id="node-tooltip" class="node-tooltip" style="display:none"></div>
+
+<script>
+/* ===== State ===== */
+const SAVE_KEY='millishira-mousou-v3';
+const defaultState=()=>({
+  screen:'title',
+  workInfo:{title:'',comment:''},
+  characters:[],nodes:[],edges:[],groups:[],
+  story:{ki:'',sho:'',ten:'',ketsu:''},
+  memos:[],
+  panelOn:{relationship:true,characters:true,story:true,memo:true},
+  panelOrder:['relationship','characters','story','memo'],
+  panelZoom:{characters:1,story:1,memo:1},
+  divX:.5,divY:.5,
+  expandedPanel:null,
+});
+let S;
+function hasSavedData(){try{return!!localStorage.getItem(SAVE_KEY);}catch(e){return false;}}
+function loadSaved(){try{const s=localStorage.getItem(SAVE_KEY);S=s?{...defaultState(),...JSON.parse(s)}:defaultState();}catch(e){S=defaultState();}}
+function load(){S=defaultState();}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
+function resetAll(){S=defaultState();localStorage.removeItem(SAVE_KEY);render();}
+
+let uid=Date.now();
+function gid(p){return p+'_'+(uid++);}
+
+/* ===== Character-Node Sync ===== */
+// Find character linked to a node (by charId or matching name)
+function charForNode(node){
+  if(node.charId)return S.characters.find(c=>c.id===node.charId);
+  return S.characters.find(c=>c.name&&c.name===node.name);
+}
+function nodeForChar(ch){
+  return S.nodes.find(n=>n.charId===ch.id)||(ch.name?S.nodes.find(n=>n.name===ch.name):null);
+}
+// Add character and ensure a node exists
+function addCharWithSync(name,role){
+  const ch={id:gid('c'),name:name||'',role:role||'protagonist',description:''};
+  S.characters.push(ch);
+  return ch;
+}
+// Add node and ensure a character exists
+function addNodeWithSync(name,x,y,charId){
+  // If charId provided, link to that character
+  if(charId){
+    const ch=S.characters.find(c=>c.id===charId);
+    if(ch){
+      const n={id:gid('n'),name:ch.name,x,y,charId:ch.id};
+      S.nodes.push(n);
+      return n;
+    }
+  }
+  // Otherwise create both
+  const ch=addCharWithSync(name,'other');
+  const n={id:gid('n'),name,x,y,charId:ch.id};
+  S.nodes.push(n);
+  return n;
+}
+
+/* ===== Tooltip ===== */
+const tooltip=$('#node-tooltip');
+function showTooltip(cx,cy,node){
+  const ch=charForNode(node);
+  let html='<div class="tt-name">'+escHtml(node.name);
+  if(ch){
+    const roleLabel=ROLES.find(r=>r.v===ch.role);
+    if(roleLabel)html+='<span class="tt-role">'+roleLabel.l+'</span>';
+  }
+  html+='</div>';
+  if(ch){
+    if(ch.description.trim())html+='<div class="tt-desc">'+escHtml(ch.description)+'</div>';
+    else html+='<div class="tt-desc" style="opacity:.5">（説明なし）</div>';
+  }
+  tooltip.innerHTML=html;
+  tooltip.style.display='block';
+  // Position
+  let tx=cx+16,ty=cy+16;
+  requestAnimationFrame(()=>{
+    const tw=tooltip.offsetWidth,th=tooltip.offsetHeight;
+    if(tx+tw>window.innerWidth)tx=cx-tw-8;
+    if(ty+th>window.innerHeight)ty=cy-th-8;
+    tooltip.style.left=tx+'px';tooltip.style.top=ty+'px';
+  });
+}
+function hideTooltip(){tooltip.style.display='none';}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ===== Panel Defs ===== */
+const PANELS=[
+  {id:'relationship',icon:'🔗',title:'人物相関図'},
+  {id:'characters',icon:'👤',title:'主要キャラ'},
+  {id:'story',icon:'📖',title:'起承転結'},
+  {id:'memo',icon:'📝',title:'メモ'},
+];
+const ROLES=[{v:'protagonist',l:'主人公'},{v:'heroine',l:'ヒロイン'},{v:'rival',l:'ライバル'},{v:'mastermind',l:'黒幕'},{v:'other',l:'その他'}];
+const NODE_COLORS=['#c9a84c','#e57373','#4fc3f7','#81c784','#ba68c8','#ffb74d','#f06292','#4dd0e1','#aed581','#ff8a65','#9575cd','#a1887f'];
+const EDGE_COLORS=['#c9a84c','#e57373','#4fc3f7','#81c784','#ba68c8','#ffb74d','#f06292','#4dd0e1','#ff8a65','#9575cd'];
+const MEMO_TYPES=[{id:'memo',label:'💭 メモ',cls:'memo'},{id:'quote',label:'💬 名言・迷言',cls:'quote'},{id:'question',label:'❓ 謎・疑問',cls:'question'}];
+
+/* ===== Interaction ===== */
+let interaction=null;
+let connectingFrom=null;
+let svgMousePos={x:0,y:0};
+let svgVB={x:-200,y:-100,w:800,h:400};
+let svgPanning=false,svgPanStart=null;
+let activePopup=null;
+let popupOpenedAt=0;
+
+/* ===== DOM ===== */
+function $(s,p){return(p||document).querySelector(s);}
+function el(tag,attrs,children){
+  const ns=['svg','g','rect','text','line','defs','marker','path','circle'].includes(tag);
+  const e=ns?document.createElementNS('http://www.w3.org/2000/svg',tag):document.createElement(tag);
+  if(attrs)Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='style'&&typeof v==='object')Object.assign(e.style,v);
+    else if(k.startsWith('on')&&typeof v==='function')e.addEventListener(k.slice(2),v);
+    else if(ns)e.setAttribute(k,v);
+    else e[k]=v;
+  });
+  if(children){
+    if(typeof children==='string')e.textContent=children;
+    else if(Array.isArray(children))children.forEach(c=>{if(c)e.appendChild(c);});
+    else e.appendChild(children);
+  }
+  return e;
+}
+
+/* ===== Render ===== */
+function render(){
+  const app=$('#app');app.innerHTML='';app.className='app';
+  closePopup();
+  if(S.screen==='welcome')renderWelcome(app);
+  else if(S.screen==='title')renderTitle(app);
+  else renderMain(app);
+  if(S.screen!=='welcome')save();
+}
+
+/* ===== Welcome (saved data choice) ===== */
+function renderWelcome(app){
+  const sc=el('div',{className:'title-screen'});
+  const box=el('div',{className:'title-box'});
+  box.innerHTML='<h1>ミリしら妄想</h1><p class="title-sub">知らない作品の内容を妄想で発表しよう！</p>';
+
+  // Load saved info for display
+  let savedTitle='';
+  try{const d=JSON.parse(localStorage.getItem(SAVE_KEY));savedTitle=d?.workInfo?.title||'';}catch(e){}
+
+  const btnGroup=el('div',{style:{display:'flex',flexDirection:'column',gap:'12px'}});
+
+  const contBtn=el('button',{className:'start-btn',onclick:()=>{loadSaved();S.screen=S.workInfo.title.trim()?'main':'title';render();}});
+  contBtn.innerHTML='続きから<span style="display:block;font-size:14px;font-weight:normal;margin-top:4px;opacity:.7">「'+savedTitle+'」</span>';
+  btnGroup.appendChild(contBtn);
+
+  const newBtn=el('button',{className:'start-btn',style:{background:'var(--bg-input)',color:'var(--c1)',border:'2px solid var(--border)'},onclick:()=>{load();S.screen='title';render();}});
+  newBtn.textContent='新規作成';
+  btnGroup.appendChild(newBtn);
+
+  const delBtn=el('button',{className:'start-btn',style:{background:'transparent',color:'#ff5252',border:'1px solid #ff5252',padding:'10px',fontSize:'14px'},onclick:()=>{
+    if(confirm('セーブデータを削除しますか？')){localStorage.removeItem(SAVE_KEY);load();S.screen='title';render();}
+  }});
+  delBtn.textContent='セーブデータを削除';
+  btnGroup.appendChild(delBtn);
+
+  box.appendChild(btnGroup);
+  sc.appendChild(box);app.appendChild(sc);
+}
+
+/* ===== Title ===== */
+function renderTitle(app){
+  const sc=el('div',{className:'title-screen'});
+  const box=el('div',{className:'title-box'});
+  box.innerHTML='<h1>ミリしら妄想</h1><p class="title-sub">知らない作品の内容を妄想で発表しよう！</p>';
+  const fg1=el('div',{className:'fg'});
+  fg1.appendChild(el('label',{},'作品名'));
+  const inp1=el('input',{type:'text',placeholder:'妄想する作品のタイトル',value:S.workInfo.title});
+  inp1.addEventListener('input',()=>{S.workInfo.title=inp1.value;save();sb.disabled=!inp1.value.trim();});
+  fg1.appendChild(inp1);box.appendChild(fg1);
+  const fg2=el('div',{className:'fg'});
+  fg2.appendChild(el('label',{},'一言コメント'));
+  const inp2=el('input',{type:'text',placeholder:'例：タイトルだけ聞いたことある！',value:S.workInfo.comment});
+  inp2.addEventListener('input',()=>{S.workInfo.comment=inp2.value;save();});
+  fg2.appendChild(inp2);box.appendChild(fg2);
+  const sb=el('button',{className:'start-btn',disabled:!S.workInfo.title.trim(),onclick:()=>{S.screen='main';render();}},'開始');
+  box.appendChild(sb);sc.appendChild(box);app.appendChild(sc);
+  setTimeout(()=>inp1.focus(),50);
+}
+
+/* ===== Main ===== */
+function renderMain(app){
+  const tb=el('div',{className:'toolbar'});
+  tb.appendChild(el('span',{className:'tb-logo'},'ミリしら妄想'));
+  const workSpan=el('span',{className:'tb-work',title:'クリックで作品名を編集',style:{cursor:'pointer'}},S.workInfo.title);
+  workSpan.addEventListener('click',e=>{
+    e.stopPropagation();
+    showPopup(e.clientX,e.clientY,'作品名を変更',[{id:'title',ph:'作品名',val:S.workInfo.title}],v=>{
+      if(v.title.trim()){S.workInfo.title=v.title.trim();render();}
+    });
+  });
+  tb.appendChild(workSpan);
+
+  // "Show all" button + Panel toggle buttons
+  const pg=el('div',{className:'tb-group'});
+  const allBtn=el('button',{
+    className:`tb-btn ${!S.expandedPanel&&Object.values(S.panelOn).every(v=>v)?'active':''}`,
+    onclick:()=>{
+      S.expandedPanel=null;
+      PANELS.forEach(p=>{S.panelOn[p.id]=true;});
+      render();
+    }
+  },'全表示');
+  pg.appendChild(allBtn);
+  PANELS.forEach(p=>{
+    const btn=el('button',{
+      className:`tb-btn ${S.panelOn[p.id]?'active':''}`,
+      onclick:()=>{S.panelOn[p.id]=!S.panelOn[p.id];if(!S.panelOn[p.id]&&S.expandedPanel===p.id)S.expandedPanel=null;render();}
+    },p.icon+' '+p.title);
+    pg.appendChild(btn);
+  });
+  tb.appendChild(pg);
+
+  tb.appendChild(el('button',{className:'tb-btn',onclick:()=>{S.screen='title';render();}},'タイトルへ'));
+  tb.appendChild(el('button',{className:'tb-btn danger',onclick:showResetModal},'リセット'));
+  app.appendChild(tb);
+
+  // Panel area
+  const area=el('div',{className:'panel-area'});
+  app.appendChild(area);
+
+  // Visible panels
+  const vis=S.expandedPanel?[S.expandedPanel]:S.panelOrder.filter(id=>S.panelOn[id]);
+  if(vis.length===0)return;
+
+  // We use requestAnimationFrame to measure area size after it's in DOM
+  requestAnimationFrame(()=>{
+    const W=area.clientWidth,H=area.clientHeight;
+    if(!W||!H)return;
+    layoutPanels(area,vis,W,H);
+  });
+}
+
+/* ===== Panel Layout Engine ===== */
+function layoutPanels(area,vis,W,H){
+  area.innerHTML='';
+  const n=vis.length;
+  const dX=S.divX,dY=S.divY;
+
+  // Calculate rects for each panel
+  let rects=[];
+  if(n===1){
+    rects=[{x:0,y:0,w:W,h:H}];
+  }else if(n===2){
+    const split=Math.round(dX*W);
+    rects=[{x:0,y:0,w:split,h:H},{x:split,y:0,w:W-split,h:H}];
+  }else if(n===3){
+    // Left = 1 panel full height, Right = 2 panels stacked
+    const splitX=Math.round(dX*W);
+    const splitY=Math.round(dY*H);
+    rects=[
+      {x:0,y:0,w:splitX,h:H},
+      {x:splitX,y:0,w:W-splitX,h:splitY},
+      {x:splitX,y:splitY,w:W-splitX,h:H-splitY},
+    ];
+  }else{
+    const splitX=Math.round(dX*W);
+    const splitY=Math.round(dY*H);
+    rects=[
+      {x:0,y:0,w:splitX,h:splitY},
+      {x:splitX,y:0,w:W-splitX,h:splitY},
+      {x:0,y:splitY,w:splitX,h:H-splitY},
+      {x:splitX,y:splitY,w:W-splitX,h:H-splitY},
+    ];
+  }
+
+  vis.forEach((pid,i)=>{
+    const pDef=PANELS.find(p=>p.id===pid);
+    const r=rects[i];
+    buildPanel(area,pDef,r,vis);
+  });
+
+  // Dividers
+  if(n>=2){
+    // Vertical divider — full height for n=2, n=3 (left|right). For n=4 only top half (bottom uses vd2).
+    const vdLeft=Math.round(dX*W)-4;
+    const vdH=(n===4)?Math.round(dY*H):H;
+    const vd=el('div',{className:'divider divider-v',style:{left:vdLeft+'px',height:vdH+'px'}});
+    vd.addEventListener('mousedown',e=>{
+      if(e.button!==0)return;e.preventDefault();
+      interaction={type:'div-v',area,W,H,vis};
+    });
+    area.appendChild(vd);
+
+    // For 4 panels, bottom vertical divider
+    if(n===4){
+      const vd2=el('div',{className:'divider divider-v',style:{left:vdLeft+'px',top:Math.round(dY*H)+'px',height:(H-Math.round(dY*H))+'px'}});
+      vd2.addEventListener('mousedown',e=>{
+        if(e.button!==0)return;e.preventDefault();
+        interaction={type:'div-v',area,W,H,vis};
+      });
+      area.appendChild(vd2);
+    }
+  }
+  if(n>=3){
+    // Horizontal divider. n=3: only spans the right column. n=4: full width.
+    const hdTop=Math.round(dY*H)-4;
+    const hdLeft=(n===3)?Math.round(dX*W):0;
+    const hdW=(n===3)?(W-Math.round(dX*W)):W;
+    const hd=el('div',{className:'divider divider-h',style:{top:hdTop+'px',left:hdLeft+'px',width:hdW+'px'}});
+    hd.addEventListener('mousedown',e=>{
+      if(e.button!==0)return;e.preventDefault();
+      interaction={type:'div-h',area,W,H,vis};
+    });
+    area.appendChild(hd);
+  }
+}
+
+function buildPanel(area,pDef,r,vis){
+  const panel=el('div',{
+    className:`panel ${pDef.id==='relationship'?'rf-panel':''}`,
+    style:{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'}
+  });
+  panel.dataset.pid=pDef.id;
+
+  const hdr=el('div',{className:'panel-hdr'});
+  const hdrL=el('div',{className:'panel-hdr-left'});
+  hdrL.appendChild(el('span',{className:'panel-icon'},pDef.icon));
+  hdrL.appendChild(el('span',{className:'panel-title'},pDef.title));
+  hdr.appendChild(hdrL);
+
+  // Zoom controls (non-relationship panels — relationship uses SVG wheel-zoom)
+  if(pDef.id!=='relationship'){
+    const zg=el('div',{className:'panel-zoom-group',style:{marginLeft:'auto',marginRight:'6px'}});
+    const curZ=()=>S.panelZoom[pDef.id]||1;
+    const mkZBtn=(label,fn,extraCls)=>{
+      const b=el('button',{className:'panel-zoom-btn'+(extraCls?' '+extraCls:''),onclick:ev=>{ev.stopPropagation();fn();}},label);
+      b.addEventListener('mousedown',ev=>ev.stopPropagation());
+      return b;
+    };
+    zg.appendChild(mkZBtn('−',()=>setPanelZoom(pDef.id,curZ()*0.9)));
+    zg.appendChild(mkZBtn(Math.round(curZ()*100)+'%',()=>setPanelZoom(pDef.id,1),'panel-zoom-reset'));
+    zg.appendChild(mkZBtn('＋',()=>setPanelZoom(pDef.id,curZ()*1.1)));
+    hdr.appendChild(zg);
+  }
+
+  // Download button
+  const dlBtn=el('button',{className:'panel-expand-btn',style:{marginRight:'4px'},onclick:e=>{
+    e.stopPropagation();
+    downloadPanel(pDef.id);
+  }},'💾 画像DL');
+  dlBtn.addEventListener('mousedown',e=>e.stopPropagation());
+  hdr.appendChild(dlBtn);
+
+  // Expand/collapse button
+  const isExpanded=S.expandedPanel===pDef.id;
+  const expBtn=el('button',{className:'panel-expand-btn',onclick:e=>{
+    e.stopPropagation();
+    S.expandedPanel=isExpanded?null:pDef.id;
+    render();
+  }},isExpanded?'縮小':'拡大');
+  expBtn.addEventListener('mousedown',e=>e.stopPropagation());
+  hdr.appendChild(expBtn);
+
+  // Drag to reorder (only when not expanded)
+  hdr.addEventListener('mousedown',e=>{
+    if(e.button!==0||S.expandedPanel)return;
+    e.preventDefault();
+    interaction={type:'panel-reorder',pid:pDef.id,startX:e.clientX,startY:e.clientY,moved:false,area,vis};
+  });
+
+  panel.appendChild(hdr);
+
+  const body=el('div',{className:'panel-body'});
+  switch(pDef.id){
+    case'relationship':renderRelationship(body,panel);break;
+    case'characters':renderCharacters(body);break;
+    case'story':renderStory(body);break;
+    case'memo':renderMemo(body);break;
+  }
+  if(pDef.id!=='relationship'){
+    body.style.zoom=String(S.panelZoom[pDef.id]||1);
+    body.addEventListener('wheel',e=>{
+      if(!e.ctrlKey)return;
+      e.preventDefault();
+      const cur=S.panelZoom[pDef.id]||1;
+      setPanelZoom(pDef.id,cur*(e.deltaY>0?0.9:1.1));
+    },{passive:false});
+  }
+  panel.appendChild(body);
+  area.appendChild(panel);
+}
+
+function updateGroupSvg(svg,gp){
+  const gEl=svg.querySelector(`[data-group-id="${gp.id}"]`);
+  if(!gEl)return;
+  [gEl.querySelector('.rf-group-shape'),gEl.querySelector('.rf-group-hit')].forEach(sh=>{
+    if(!sh)return;
+    if(sh.tagName.toLowerCase()==='rect'){
+      sh.setAttribute('x',gp.x);sh.setAttribute('y',gp.y);
+      sh.setAttribute('width',gp.w);sh.setAttribute('height',gp.h);
+    }else{
+      sh.setAttribute('cx',gp.x+gp.w/2);sh.setAttribute('cy',gp.y+gp.h/2);
+      sh.setAttribute('rx',gp.w/2);sh.setAttribute('ry',gp.h/2);
+    }
+  });
+  const lbl=gEl.querySelector('.rf-group-label');
+  lbl.setAttribute('x',gp.x+14);lbl.setAttribute('y',gp.y+10);
+  const rh=gEl.querySelector('.rf-group-resize');
+  rh.setAttribute('x',gp.x+gp.w-10);rh.setAttribute('y',gp.y+gp.h-10);
+}
+
+function setPanelZoom(pid,z){
+  z=Math.max(0.5,Math.min(2.5,z));
+  S.panelZoom[pid]=z;
+  const panel=document.querySelector(`.panel[data-pid="${pid}"]`);
+  if(panel){
+    const body=panel.querySelector('.panel-body');
+    if(body)body.style.zoom=String(z);
+    const lbl=panel.querySelector('.panel-zoom-reset');
+    if(lbl)lbl.textContent=Math.round(z*100)+'%';
+  }
+  save();
+}
+
+/* ===== Relationship Map ===== */
+function renderRelationship(body,panelEl){
+  // Adjust viewBox aspect ratio to match panel body so rectangles aren't skewed.
+  // Keep horizontal extent constant; recompute vertical extent from current aspect.
+  const pw=parseFloat(panelEl.style.width)||800;
+  const ph=parseFloat(panelEl.style.height)||400;
+  const bw=Math.max(pw,1), bh=Math.max(ph-34,1);
+  const aspect=bh/bw;
+  const newH=svgVB.w*aspect;
+  const cy=svgVB.y+svgVB.h/2;
+  svgVB.y=cy-newH/2;
+  svgVB.h=newH;
+
+  const svg=el('svg',{class:'rf-svg'});
+  svg.setAttribute('viewBox',`${svgVB.x} ${svgVB.y} ${svgVB.w} ${svgVB.h}`);
+
+  // Arrow markers per color
+  const defs=el('defs');
+  const usedColors=new Set();
+  S.edges.forEach(e=>{usedColors.add(e.color||'#c9a84c');});
+  usedColors.forEach(c=>{
+    const mid='arrow-'+c.replace('#','');
+    const marker=el('marker',{id:mid,viewBox:'0 0 10 10',refX:'9',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'});
+    marker.appendChild(el('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:c}));
+    defs.appendChild(marker);
+  });
+  svg.appendChild(defs);
+
+  // Groups (organizations) — rendered behind edges/nodes
+  S.groups.forEach(gp=>{
+    const gg=el('g',{class:'rf-group','data-group-id':gp.id});
+    const gc=gp.color||'#4fc3f7';
+    if(gp.shape==='ellipse'){
+      const rx=gp.w/2,ry=gp.h/2;
+      const cx=gp.x+rx,cy=gp.y+ry;
+      gg.appendChild(el('ellipse',{class:'rf-group-shape',cx:''+cx,cy:''+cy,rx:''+rx,ry:''+ry,fill:gc,'fill-opacity':'0.08',stroke:gc,'stroke-width':'2','stroke-dasharray':'8 4'}));
+      gg.appendChild(el('ellipse',{class:'rf-group-hit',cx:''+cx,cy:''+cy,rx:''+rx,ry:''+ry}));
+    }else{
+      gg.appendChild(el('rect',{class:'rf-group-shape',x:''+gp.x,y:''+gp.y,width:''+gp.w,height:''+gp.h,rx:'12',ry:'12',fill:gc,'fill-opacity':'0.08',stroke:gc,'stroke-width':'2','stroke-dasharray':'8 4'}));
+      gg.appendChild(el('rect',{class:'rf-group-hit',x:''+gp.x,y:''+gp.y,width:''+gp.w,height:''+gp.h,rx:'12',ry:'12'}));
+    }
+    gg.appendChild(el('text',{class:'rf-group-label',x:''+(gp.x+14),y:''+(gp.y+10),fill:gc},gp.name||'組織'));
+    gg.appendChild(el('rect',{class:'rf-group-resize',x:''+(gp.x+gp.w-10),y:''+(gp.y+gp.h-10),width:'18',height:'18',rx:'3',ry:'3',fill:gc,'fill-opacity':'0.5',stroke:gc,'data-resize':'1'}));
+
+    gg.addEventListener('mousedown',e=>{
+      if(e.button!==0)return;
+      e.preventDefault();e.stopPropagation();
+      hideTooltip();
+      const pt=svgCoord(svg,e.clientX,e.clientY);
+      if(e.target.getAttribute&&e.target.getAttribute('data-resize')==='1'){
+        interaction={type:'group-resize',groupId:gp.id,svg};
+      }else{
+        interaction={type:'group-drag',groupId:gp.id,svg,ox:pt.x-gp.x,oy:pt.y-gp.y};
+      }
+    });
+    gg.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();showGroupCtx(e.clientX,e.clientY,gp);});
+    gg.addEventListener('dblclick',e=>{
+      e.stopPropagation();
+      showPopup(e.clientX,e.clientY,'組織名編集',[{id:'name',ph:'組織名',val:gp.name}],v=>{
+        gp.name=v.name.trim()||'組織';render();
+      });
+    });
+    svg.appendChild(gg);
+  });
+
+  // Edges (use shared layout to avoid label overlap)
+  const edgeLayout=layoutAllEdges();
+  const openColor=(e,edge)=>{e.stopPropagation();showEdgeColorPicker(e.clientX,e.clientY,edge);};
+  S.edges.forEach(edge=>{
+    const L=edgeLayout[edge.id];
+    if(!L)return;
+    const ec=edge.color||'#c9a84c';
+    const mid='arrow-'+ec.replace('#','');
+
+    const g=el('g',{class:'rf-edge','data-edge-id':edge.id});
+    // Wide invisible hit path under the visible one — gives the line a clickable area
+    const hit=el('path',{class:'rf-edge-hit',d:L.d});
+    hit.addEventListener('click',e=>openColor(e,edge));
+    hit.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();showEdgeCtx(e.clientX,e.clientY,edge);});
+    g.appendChild(hit);
+    g.appendChild(el('path',{class:'rf-edge-vis',d:L.d,stroke:ec,'marker-end':'url(#'+mid+')'}));
+
+    const lt=edge.label||'関係';
+    const bgRect=el('rect',{class:'rf-edge-bg',x:''+(L.lx-L.lw/2),y:''+(L.ly-11),width:''+L.lw,height:'22',rx:'4',ry:'4'});
+    bgRect.addEventListener('click',e=>openColor(e,edge));
+    bgRect.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();showEdgeCtx(e.clientX,e.clientY,edge);});
+    g.appendChild(bgRect);
+    const txt=el('text',{x:''+L.lx,y:''+L.ly,fill:ec},lt);
+    txt.addEventListener('click',e=>openColor(e,edge));
+    txt.addEventListener('dblclick',e=>{e.stopPropagation();showPopup(e.clientX,e.clientY,'関係ラベル編集',[{id:'label',ph:'ラベル',val:edge.label}],v=>{edge.label=v.label.trim()||'関係';render();});});
+    txt.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();showEdgeCtx(e.clientX,e.clientY,edge);});
+    g.appendChild(txt);
+    svg.appendChild(g);
+  });
+
+  // Temp line
+  if(connectingFrom){
+    const src=S.nodes.find(n=>n.id===connectingFrom);
+    if(src)svg.appendChild(el('line',{class:'rf-temp-line',x1:''+src.x,y1:''+src.y,x2:''+svgMousePos.x,y2:''+svgMousePos.y}));
+    svg.classList.add('rf-connecting');
+  }
+
+  // Nodes
+  S.nodes.forEach(node=>{
+    const g=el('g',{class:'rf-node','data-id':node.id});
+    const rw=Math.max(node.name.length*15+28,90),rh=40;
+    const nc=node.color||'#c9a84c';
+    const r=el('rect',{class:'rf-node-rect',x:''+(node.x-rw/2),y:''+(node.y-rh/2),width:''+rw,height:''+rh,fill:node.bgColor||'var(--node-bg)',stroke:nc});
+    g.appendChild(r);
+    g.appendChild(el('text',{x:''+node.x,y:''+node.y,fill:'#fff'},node.name));
+
+    // Drag handles on the four sides — drag from these to create a relationship line.
+    const handlePts=[
+      {hx:node.x,hy:node.y-rh/2,side:'top'},
+      {hx:node.x,hy:node.y+rh/2,side:'bottom'},
+      {hx:node.x-rw/2,hy:node.y,side:'left'},
+      {hx:node.x+rw/2,hy:node.y,side:'right'},
+    ];
+    handlePts.forEach(hp=>{
+      const h=el('circle',{class:'rf-handle',cx:''+hp.hx,cy:''+hp.hy,r:'6','data-side':hp.side});
+      h.addEventListener('mousedown',e=>{
+        if(e.button!==0)return;
+        e.preventDefault();e.stopPropagation();
+        hideTooltip();
+        connectingFrom=node.id;
+        interaction={type:'edge-connect-drag',svg,sourceId:node.id};
+        // Append a temp line dynamically (renderRelationship's temp line is gated on connectingFrom set BEFORE render)
+        const existing=svg.querySelector('.rf-temp-line');
+        if(!existing){
+          const tl=el('line',{class:'rf-temp-line',x1:''+hp.hx,y1:''+hp.hy,x2:''+hp.hx,y2:''+hp.hy});
+          svg.appendChild(tl);
+        }
+        svg.classList.add('rf-connecting');
+      });
+      g.appendChild(h);
+    });
+
+    g.addEventListener('mousedown',e=>{
+      if(e.button!==0)return;
+      e.preventDefault();e.stopPropagation();
+      if(connectingFrom){
+        if(connectingFrom!==node.id){
+          showPopup(e.clientX,e.clientY,'関係を追加',[{id:'label',ph:'関係ラベル（例：ライバル、師弟）',val:''}],v=>{
+            S.edges.push({id:gid('e'),source:connectingFrom,target:node.id,label:v.label.trim()||'関係'});
+            connectingFrom=null;render();
+          },()=>{connectingFrom=null;render();});
+        }else{connectingFrom=null;render();}
+        return;
+      }
+      const pt=svgCoord(svg,e.clientX,e.clientY);
+      interaction={type:'node-drag',nodeId:node.id,svg,ox:pt.x-node.x,oy:pt.y-node.y};
+    });
+
+    g.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();hideTooltip();showNodeCtx(e.clientX,e.clientY,node);});
+    g.addEventListener('dblclick',e=>{e.stopPropagation();hideTooltip();showPopup(e.clientX,e.clientY,'名前編集',[{id:'name',ph:'キャラ名',val:node.name}],v=>{if(v.name.trim()){const ch=charForNode(node);if(ch)ch.name=v.name.trim();node.name=v.name.trim();render();}});});
+    g.addEventListener('mouseenter',e=>{showTooltip(e.clientX,e.clientY,node);});
+    g.addEventListener('mouseleave',()=>{hideTooltip();});
+    g.addEventListener('mousemove',e=>{
+      if(tooltip.style.display!=='none'){
+        tooltip.style.left=(e.clientX+16)+'px';
+        tooltip.style.top=(e.clientY+16)+'px';
+      }
+    });
+    svg.appendChild(g);
+  });
+
+  // BG interactions
+  svg.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+    if(e.target===svg||e.target.tagName==='svg'){
+      const pt=svgCoord(svg,e.clientX,e.clientY);
+      showBgCtx(e.clientX,e.clientY,pt.x,pt.y);
+    }
+  });
+  svg.addEventListener('mousedown',e=>{
+    if(e.button!==0)return;
+    if(connectingFrom){connectingFrom=null;render();return;}
+    if(e.target===svg||e.target.tagName==='svg'){
+      e.preventDefault();
+      svgPanning=true;
+      svgPanStart={x:e.clientX,y:e.clientY,vx:svgVB.x,vy:svgVB.y};
+    }
+  });
+  svg.addEventListener('mousemove',e=>{
+    const pt=svgCoord(svg,e.clientX,e.clientY);
+    svgMousePos=pt;
+    if(connectingFrom){
+      const tl=svg.querySelector('.rf-temp-line');
+      if(tl){tl.setAttribute('x2',pt.x);tl.setAttribute('y2',pt.y);}
+    }
+  });
+  svg.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const s=e.deltaY>0?1.1:.9;
+    const pt=svgCoord(svg,e.clientX,e.clientY);
+    svgVB.x=pt.x-(pt.x-svgVB.x)*s;
+    svgVB.y=pt.y-(pt.y-svgVB.y)*s;
+    svgVB.w*=s;svgVB.h*=s;
+    svg.setAttribute('viewBox',`${svgVB.x} ${svgVB.y} ${svgVB.w} ${svgVB.h}`);
+  },{passive:false});
+
+  body.appendChild(svg);
+}
+
+function svgCoord(svgEl,cx,cy){
+  const pt=svgEl.createSVGPoint();
+  pt.x=cx;pt.y=cy;
+  const ctm=svgEl.getScreenCTM();
+  if(!ctm)return{x:0,y:0};
+  const svgPt=pt.matrixTransform(ctm.inverse());
+  return{x:svgPt.x,y:svgPt.y};
+}
+
+function edgePt(fx,fy,tx,ty,rw,rh){
+  const dx=fx-tx,dy=fy-ty;
+  if(Math.abs(dx)<.01&&Math.abs(dy)<.01)return{x:tx,y:ty};
+  const sx=Math.abs(dx)>.001?(rw/2)/Math.abs(dx):1e9;
+  const sy=Math.abs(dy)>.001?(rh/2)/Math.abs(dy):1e9;
+  const s=Math.min(sx,sy);
+  return{x:tx+dx*s,y:ty+dy*s};
+}
+
+/* Compute edge path & base label position. */
+function edgeBase(edge){
+  const src=S.nodes.find(n=>n.id===edge.source);
+  const tgt=S.nodes.find(n=>n.id===edge.target);
+  if(!src||!tgt)return null;
+  const srcRW=Math.max(src.name.length*15+28,90),srcRH=40;
+  const tgtRW=Math.max(tgt.name.length*15+28,90),tgtRH=40;
+  const sp=edgePt(tgt.x,tgt.y,src.x,src.y,srcRW,srcRH);
+  const tp=edgePt(src.x,src.y,tgt.x,tgt.y,tgtRW,tgtRH);
+  const bidir=!!S.edges.find(o=>o.source===edge.target&&o.target===edge.source&&o.id!==edge.id);
+  let d,mx,my;
+  if(bidir){
+    // Always offset by +30 along this edge's left-normal.
+    // Because the reverse edge has flipped direction (and thus a flipped normal),
+    // it ends up on the opposite side automatically.
+    const dx=tp.x-sp.x,dy=tp.y-sp.y;
+    const len=Math.sqrt(dx*dx+dy*dy)||1;
+    const nx=-dy/len,ny=dx/len;
+    const off=30;
+    const cx2=((sp.x+tp.x)/2)+nx*off,cy2=((sp.y+tp.y)/2)+ny*off;
+    d=`M${sp.x},${sp.y} Q${cx2},${cy2} ${tp.x},${tp.y}`;
+    mx=.25*sp.x+.5*cx2+.25*tp.x;my=.25*sp.y+.5*cy2+.25*tp.y;
+  }else{
+    d=`M${sp.x},${sp.y} L${tp.x},${tp.y}`;
+    mx=(sp.x+tp.x)/2;my=(sp.y+tp.y)/2;
+  }
+  return{d,mx,my,sp,tp};
+}
+
+/* Resolve label positions across all edges so they don't overlap.
+   For each edge, slide its label along the chord direction until it
+   no longer collides with previously placed labels. */
+function layoutAllEdges(){
+  const result={};
+  const placed=[];
+  const PAD=4;
+  for(const edge of S.edges){
+    const base=edgeBase(edge);
+    if(!base)continue;
+    const lt=edge.label||'関係';
+    const lw=lt.length*13+10, lh=22;
+    const sp=base.sp,tp=base.tp;
+    const dx=tp.x-sp.x,dy=tp.y-sp.y;
+    const len=Math.sqrt(dx*dx+dy*dy)||1;
+    const ux=dx/len,uy=dy/len;
+    // Candidate offsets: 0, ±step, ±2step, ...
+    const step=Math.max(lw*0.55,24);
+    const candidates=[0];
+    for(let k=1;k<=6;k++){candidates.push(k*step);candidates.push(-k*step);}
+    let lx=base.mx, ly=base.my;
+    for(const t of candidates){
+      // Don't slide past either endpoint
+      if(Math.abs(t)>len*0.4)continue;
+      const x=base.mx+ux*t, y=base.my+uy*t;
+      let ok=true;
+      for(const p of placed){
+        if(Math.abs(x-p.x)<(lw+p.w)/2+PAD && Math.abs(y-p.y)<(lh+p.h)/2+PAD){ok=false;break;}
+      }
+      if(ok){lx=x;ly=y;break;}
+    }
+    placed.push({x:lx,y:ly,w:lw,h:lh});
+    result[edge.id]={d:base.d,lx,ly,lw,lh};
+  }
+  return result;
+}
+
+/* ===== Context Menus ===== */
+const ctxMenu=$('#ctx-menu');
+ctxMenu.addEventListener('click',e=>e.stopPropagation());
+function hideCtx(){ctxMenu.classList.remove('show');ctxMenu.innerHTML='';}
+
+function showBgCtx(cx,cy,sx,sy){
+  hideCtx();
+  ctxMenu.style.left=cx+'px';ctxMenu.style.top=cy+'px';
+
+  // Show existing characters not yet on the map
+  const unmapped=S.characters.filter(ch=>ch.name.trim()&&!nodeForChar(ch));
+  if(unmapped.length>0){
+    unmapped.forEach(ch=>{
+      ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{
+        hideCtx();
+        addNodeWithSync(ch.name,sx,sy,ch.id);
+        render();
+      }},'👤 '+ch.name+'を配置'));
+    });
+    ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  }
+
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{
+    hideCtx();
+    showPopup(cx,cy,'キャラ追加',[{id:'name',ph:'キャラ名',val:''}],v=>{
+      if(!v.name.trim())return;
+      addNodeWithSync(v.name.trim(),sx,sy);
+      render();
+    });
+  }},'＋ 新しいキャラを追加'));
+  ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{
+    hideCtx();
+    showPopup(cx,cy,'組織枠を追加',[{id:'name',ph:'組織・団体名（例：○○学園、△△社）',val:''}],v=>{
+      const name=v.name.trim()||'組織';
+      S.groups.push({id:gid('g'),name,x:sx-160,y:sy-110,w:320,h:220,color:'#4fc3f7',shape:'rect'});
+      render();
+    });
+  }},'🏛 新しい組織枠を追加'));
+  ctxMenu.classList.add('show');
+}
+
+function showGroupCtx(cx,cy,gp){
+  hideCtx();
+  ctxMenu.style.left=cx+'px';ctxMenu.style.top=cy+'px';
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{
+    hideCtx();
+    showPopup(cx,cy,'組織名編集',[{id:'name',ph:'組織名',val:gp.name}],v=>{gp.name=v.name.trim()||'組織';render();});
+  }},'✏️ 組織名を編集'));
+  ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{
+    gp.shape=gp.shape==='ellipse'?'rect':'ellipse';hideCtx();render();
+  }},gp.shape==='ellipse'?'▢ 四角形に変更':'◯ 楕円に変更'));
+  ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  ctxMenu.appendChild(el('div',{className:'ctx-item',style:{fontSize:'11px',color:'var(--c2)',cursor:'default',pointerEvents:'none'}},'枠の色'));
+  const gcRow=el('div',{className:'ctx-colors'});
+  NODE_COLORS.forEach(c=>{
+    const dot=el('div',{className:'ctx-color'+(gp.color===c?' sel':''),style:{background:c},onclick:()=>{gp.color=c;hideCtx();render();}});
+    gcRow.appendChild(dot);
+  });
+  ctxMenu.appendChild(gcRow);
+  ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{
+    hideCtx();
+    S.groups=S.groups.filter(g=>g.id!==gp.id);
+    render();
+  }},'🗑 組織枠を削除'));
+  ctxMenu.classList.add('show');
+}
+
+function showNodeCtx(cx,cy,node){
+  hideCtx();
+  ctxMenu.style.left=cx+'px';ctxMenu.style.top=cy+'px';
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{hideCtx();connectingFrom=node.id;render();}},'🔗 関係線を追加'));
+  ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{hideCtx();showPopup(cx,cy,'名前編集',[{id:'name',ph:'キャラ名',val:node.name}],v=>{
+    if(v.name.trim()){
+      const ch=charForNode(node);
+      if(ch)ch.name=v.name.trim();
+      node.name=v.name.trim();
+      render();
+    }
+  });}},'✏️ 名前を編集'));
+  ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  // Node color picker
+  ctxMenu.appendChild(el('div',{className:'ctx-item',style:{fontSize:'11px',color:'var(--c2)',cursor:'default',pointerEvents:'none'}},'枠の色'));
+  const ncRow=el('div',{className:'ctx-colors'});
+  NODE_COLORS.forEach(c=>{
+    const dot=el('div',{className:'ctx-color'+(node.color===c?' sel':''),style:{background:c},onclick:()=>{node.color=c;hideCtx();render();}});
+    ncRow.appendChild(dot);
+  });
+  ctxMenu.appendChild(ncRow);
+  ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{
+    hideCtx();
+    S.nodes=S.nodes.filter(n=>n.id!==node.id);
+    S.edges=S.edges.filter(e=>e.source!==node.id&&e.target!==node.id);
+    render();
+  }},'🗑 相関図から削除'));
+  ctxMenu.classList.add('show');
+}
+
+function showEdgeCtx(cx,cy,edge){
+  hideCtx();
+  ctxMenu.style.left=cx+'px';ctxMenu.style.top=cy+'px';
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{hideCtx();showPopup(cx,cy,'関係ラベル編集',[{id:'label',ph:'ラベル',val:edge.label}],v=>{edge.label=v.label.trim()||'関係';render();});}},'✏️ ラベル編集'));
+  ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  ctxMenu.appendChild(el('div',{className:'ctx-item',style:{fontSize:'11px',color:'var(--c2)',cursor:'default',pointerEvents:'none'}},'線の色'));
+  const ecRow=el('div',{className:'ctx-colors'});
+  EDGE_COLORS.forEach(c=>{
+    const dot=el('div',{className:'ctx-color'+(edge.color===c?' sel':''),style:{background:c},onclick:()=>{edge.color=c;hideCtx();render();}});
+    ecRow.appendChild(dot);
+  });
+  ctxMenu.appendChild(ecRow);
+  ctxMenu.appendChild(el('div',{className:'ctx-sep'}));
+  ctxMenu.appendChild(el('div',{className:'ctx-item',onclick:()=>{hideCtx();S.edges=S.edges.filter(e=>e.id!==edge.id);render();}},'🗑 関係線を削除'));
+  ctxMenu.classList.add('show');
+}
+
+/* ===== Edge color picker popup ===== */
+function showEdgeColorPicker(cx,cy,edge){
+  closePopup();
+  const pop=el('div',{className:'popup',style:{minWidth:'auto',padding:'10px'}});
+  pop.appendChild(el('div',{style:{fontSize:'12px',color:'var(--c2)',marginBottom:'8px'}},'線の色'));
+  const row=el('div',{style:{display:'flex',gap:'6px',flexWrap:'wrap',maxWidth:'200px'}});
+  EDGE_COLORS.forEach(c=>{
+    const dot=el('div',{
+      className:'ctx-color'+(edge.color===c?' sel':''),
+      style:{background:c,width:'24px',height:'24px',borderRadius:'50%',cursor:'pointer',border:'2px solid '+(edge.color===c?'#fff':'transparent')},
+      onclick:e=>{e.stopPropagation();edge.color=c;closePopup();render();}
+    });
+    row.appendChild(dot);
+  });
+  pop.appendChild(row);
+  pop.addEventListener('click',e=>e.stopPropagation());
+  pop.addEventListener('mousedown',e=>e.stopPropagation());
+  document.body.appendChild(pop);
+  activePopup=pop;
+  popupOpenedAt=Date.now();
+  requestAnimationFrame(()=>{
+    let px=cx+10,py=cy-10;
+    const bw=pop.offsetWidth,bh=pop.offsetHeight;
+    if(px+bw>window.innerWidth)px=window.innerWidth-bw-8;
+    if(py+bh>window.innerHeight)py=window.innerHeight-bh-8;
+    if(px<4)px=4;if(py<4)py=4;
+    pop.style.left=px+'px';pop.style.top=py+'px';
+  });
+}
+
+/* ===== Popup (small floating dialog) ===== */
+function closePopup(){
+  if(activePopup){activePopup.remove();activePopup=null;}
+}
+function showPopup(cx,cy,title,fields,onOk,onCancel){
+  closePopup();
+  const pop=el('div',{className:'popup'});
+  // Position: near click, but keep on screen
+  let px=cx+10,py=cy-10;
+  pop.appendChild(el('h4',{},title));
+  const inputs={};
+  fields.forEach(f=>{
+    const inp=el('input',{className:'popup-input',type:'text',placeholder:f.ph||'',value:f.val||''});
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='Enter')doOk();
+      if(e.key==='Escape'){closePopup();if(onCancel)onCancel();}
+      e.stopPropagation();
+    });
+    inp.addEventListener('mousedown',e=>e.stopPropagation());
+    pop.appendChild(inp);
+    inputs[f.id]=inp;
+  });
+  const acts=el('div',{className:'popup-actions'});
+  acts.appendChild(el('button',{className:'popup-btn popup-btn-cancel',onclick:()=>{closePopup();if(onCancel)onCancel();}},'キャンセル'));
+  acts.appendChild(el('button',{className:'popup-btn popup-btn-ok',onclick:doOk},'OK'));
+  pop.appendChild(acts);
+
+  function doOk(){
+    const v={};Object.entries(inputs).forEach(([k,inp])=>{v[k]=inp.value;});
+    closePopup();onOk(v);
+  }
+
+  // Prevent clicks inside popup from closing it
+  pop.addEventListener('click',e=>e.stopPropagation());
+  pop.addEventListener('mousedown',e=>e.stopPropagation());
+
+  document.body.appendChild(pop);
+  activePopup=pop;
+
+  popupOpenedAt=Date.now();
+  requestAnimationFrame(()=>{
+    const bw=pop.offsetWidth,bh=pop.offsetHeight;
+    if(px+bw>window.innerWidth)px=window.innerWidth-bw-8;
+    if(py+bh>window.innerHeight)py=window.innerHeight-bh-8;
+    if(px<4)px=4;if(py<4)py=4;
+    pop.style.left=px+'px';pop.style.top=py+'px';
+    const firstInp=Object.values(inputs)[0];
+    if(firstInp)firstInp.focus();
+  });
+}
+
+function showResetModal(){
+  const ov=el('div',{className:'modal-overlay'});
+  const m=el('div',{className:'modal'});
+  m.appendChild(el('h3',{},'データをリセット'));
+  m.appendChild(el('p',{style:{color:'var(--c2)',marginBottom:'14px'}},'すべてのデータが削除されます。本当にリセットしますか？'));
+  const a=el('div',{className:'modal-actions'});
+  a.appendChild(el('button',{className:'popup-btn popup-btn-cancel',onclick:()=>ov.remove()},'キャンセル'));
+  a.appendChild(el('button',{className:'popup-btn',style:{background:'#ff1744',color:'#fff'},onclick:()=>{ov.remove();resetAll();}},'リセットする'));
+  m.appendChild(a);
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+  m.addEventListener('click',e=>e.stopPropagation());
+  ov.appendChild(m);document.body.appendChild(ov);
+}
+
+/* ===== Characters ===== */
+function renderCharacters(body){
+  const add=el('button',{className:'char-add',onclick:()=>{
+    const ch=addCharWithSync('','protagonist');
+    // Don't add node yet — node is created when name is entered or from map
+    render();
+  }},'＋ キャラクター追加');
+  body.appendChild(add);
+
+  S.characters.forEach(ch=>{
+    const card=el('div',{className:'char-card'});
+    card.appendChild(el('button',{className:'char-del',onclick:()=>{
+      // Also remove linked node & edges
+      const node=nodeForChar(ch);
+      if(node){
+        S.edges=S.edges.filter(e=>e.source!==node.id&&e.target!==node.id);
+        S.nodes=S.nodes.filter(n=>n.id!==node.id);
+      }
+      S.characters=S.characters.filter(c=>c.id!==ch.id);
+      render();
+    }},'✕'));
+    const top=el('div',{className:'char-card-top'});
+    const ni=el('input',{className:'char-name',value:ch.name,placeholder:'キャラ名'});
+    ni.addEventListener('input',()=>{
+      // Sync name to node
+      const node=nodeForChar(ch);
+      ch.name=ni.value;
+      if(node)node.name=ni.value;
+      save();
+    });
+    ni.addEventListener('mousedown',e=>e.stopPropagation());
+    top.appendChild(ni);
+    const rs=el('select',{className:'char-role'});
+    ROLES.forEach(r=>{const o=el('option',{value:r.v},r.l);if(r.v===ch.role)o.selected=true;rs.appendChild(o);});
+    rs.addEventListener('change',()=>{ch.role=rs.value;save();});
+    rs.addEventListener('mousedown',e=>e.stopPropagation());
+    top.appendChild(rs);card.appendChild(top);
+    const desc=el('textarea',{className:'char-desc',placeholder:'このキャラの説明・妄想設定...'});
+    desc.textContent=ch.description;
+    desc.addEventListener('input',()=>{ch.description=desc.value;save();});
+    desc.addEventListener('mousedown',e=>e.stopPropagation());
+    card.appendChild(desc);body.appendChild(card);
+  });
+}
+
+/* ===== Story ===== */
+function renderStory(body){
+  body.style.padding='8px';body.style.display='flex';body.style.flexDirection='column';
+  const blocks=[{key:'ki',label:'起',desc:'始まり・導入'},{key:'sho',label:'承',desc:'展開・事件'},{key:'ten',label:'転',desc:'転換・クライマックス'},{key:'ketsu',label:'結',desc:'結末・まとめ'}];
+
+  const grid=el('div',{className:'story-grid'});
+  blocks.forEach(b=>{
+    const blk=el('div',{className:'story-block'});
+    const hdr=el('div',{className:'story-block-hdr'});
+    hdr.appendChild(el('span',{className:'story-label'},b.label));
+    hdr.appendChild(el('div',{className:'story-dot'+(S.story[b.key].trim()?' on':'')}));
+    hdr.appendChild(el('span',{className:'story-desc'},b.desc));
+    blk.appendChild(hdr);
+    const ta=el('textarea',{className:'story-ta',placeholder:b.label+'：'+b.desc+'...'});
+    ta.textContent=S.story[b.key];
+    ta.addEventListener('input',()=>{
+      S.story[b.key]=ta.value;save();
+      hdr.querySelector('.story-dot').className='story-dot'+(ta.value.trim()?' on':'');
+    });
+    ta.addEventListener('mousedown',e=>e.stopPropagation());
+    blk.appendChild(ta);grid.appendChild(blk);
+  });
+  body.appendChild(grid);
+}
+
+/* ===== Memo ===== */
+function renderMemo(body){
+  const btns=el('div',{className:'memo-btns'});
+  MEMO_TYPES.forEach(t=>{
+    btns.appendChild(el('button',{className:'memo-type-btn mt-'+t.cls,onclick:()=>{
+      S.memos.push({id:gid('m'),type:t.id,text:''});render();
+    }},t.label));
+  });
+  body.appendChild(btns);
+
+  const grid=el('div',{className:'memo-grid'});
+  S.memos.forEach(memo=>{
+    const ti=MEMO_TYPES.find(t=>t.id===memo.type)||MEMO_TYPES[0];
+    const card=el('div',{className:'memo-card mc-'+ti.cls});
+    card.appendChild(el('button',{className:'memo-card-del',onclick:()=>{S.memos=S.memos.filter(m=>m.id!==memo.id);render();}},'✕'));
+    card.appendChild(el('div',{className:'memo-card-type'},ti.label));
+    const ta=el('textarea',{className:'memo-card-text',placeholder:'ここにメモを入力...'});
+    ta.textContent=memo.text;
+    ta.addEventListener('input',()=>{memo.text=ta.value;save();});
+    ta.addEventListener('mousedown',e=>e.stopPropagation());
+    card.appendChild(ta);grid.appendChild(card);
+  });
+  body.appendChild(grid);
+}
+
+/* ===== Global Mouse ===== */
+document.addEventListener('mousemove',e=>{
+  if(!interaction){
+    if(svgPanning&&svgPanStart){
+      const svgEl=$('.rf-svg');if(!svgEl)return;
+      const r=svgEl.getBoundingClientRect();
+      const sx=svgVB.w/r.width,sy=svgVB.h/r.height;
+      svgVB.x=svgPanStart.vx-(e.clientX-svgPanStart.x)*sx;
+      svgVB.y=svgPanStart.vy-(e.clientY-svgPanStart.y)*sy;
+      svgEl.setAttribute('viewBox',`${svgVB.x} ${svgVB.y} ${svgVB.w} ${svgVB.h}`);
+    }
+    return;
+  }
+
+  const it=interaction;
+
+  if(it.type==='div-v'){
+    const r=it.area.getBoundingClientRect();
+    S.divX=Math.max(.15,Math.min(.85,(e.clientX-r.left)/it.W));
+    layoutPanels(it.area,it.vis,it.W,it.H);
+  }
+  else if(it.type==='div-h'){
+    const r=it.area.getBoundingClientRect();
+    S.divY=Math.max(.15,Math.min(.85,(e.clientY-r.top)/it.H));
+    layoutPanels(it.area,it.vis,it.W,it.H);
+  }
+  else if(it.type==='node-drag'){
+    const pt=svgCoord(it.svg,e.clientX,e.clientY);
+    const node=S.nodes.find(n=>n.id===it.nodeId);
+    if(!node)return;
+    node.x=pt.x-it.ox;node.y=pt.y-it.oy;
+    // Update node position in SVG
+    const g=it.svg.querySelector(`[data-id="${node.id}"]`);
+    if(g){
+      const rect=g.querySelector('rect');const txt=g.querySelector('text');
+      const rw=parseFloat(rect.getAttribute('width')),rh=parseFloat(rect.getAttribute('height'));
+      rect.setAttribute('x',node.x-rw/2);rect.setAttribute('y',node.y-rh/2);
+      txt.setAttribute('x',node.x);txt.setAttribute('y',node.y);
+    }
+    // Move handles with the node
+    if(g){
+      const rw=parseFloat(g.querySelector('rect').getAttribute('width'));
+      const rh=parseFloat(g.querySelector('rect').getAttribute('height'));
+      const handles=g.querySelectorAll('.rf-handle');
+      const pts=[
+        {x:node.x,y:node.y-rh/2},
+        {x:node.x,y:node.y+rh/2},
+        {x:node.x-rw/2,y:node.y},
+        {x:node.x+rw/2,y:node.y},
+      ];
+      handles.forEach((h,i)=>{h.setAttribute('cx',pts[i].x);h.setAttribute('cy',pts[i].y);});
+    }
+    // Re-layout all edges (so label collision avoidance updates live)
+    const layout=layoutAllEdges();
+    S.edges.forEach(edge=>{
+      const eg=it.svg.querySelector(`[data-edge-id="${edge.id}"]`);
+      if(!eg)return;
+      const L=layout[edge.id];
+      if(!L)return;
+      eg.querySelectorAll('path').forEach(p=>p.setAttribute('d',L.d));
+      const bg=eg.querySelector('rect');
+      const txt=eg.querySelector('text');
+      bg.setAttribute('x',L.lx-L.lw/2);
+      bg.setAttribute('y',L.ly-11);
+      bg.setAttribute('width',L.lw);
+      txt.setAttribute('x',L.lx);
+      txt.setAttribute('y',L.ly);
+    });
+  }
+  else if(it.type==='edge-connect-drag'){
+    const pt=svgCoord(it.svg,e.clientX,e.clientY);
+    svgMousePos=pt;
+    const tl=it.svg.querySelector('.rf-temp-line');
+    if(tl){tl.setAttribute('x2',pt.x);tl.setAttribute('y2',pt.y);}
+  }
+  else if(it.type==='group-drag'){
+    const pt=svgCoord(it.svg,e.clientX,e.clientY);
+    const gp=S.groups.find(g=>g.id===it.groupId);
+    if(!gp)return;
+    gp.x=pt.x-it.ox;gp.y=pt.y-it.oy;
+    updateGroupSvg(it.svg,gp);
+  }
+  else if(it.type==='group-resize'){
+    const pt=svgCoord(it.svg,e.clientX,e.clientY);
+    const gp=S.groups.find(g=>g.id===it.groupId);
+    if(!gp)return;
+    gp.w=Math.max(80,pt.x-gp.x);
+    gp.h=Math.max(60,pt.y-gp.y);
+    updateGroupSvg(it.svg,gp);
+  }
+  else if(it.type==='panel-reorder'){
+    const dx=e.clientX-it.startX,dy=e.clientY-it.startY;
+    if(!it.moved&&Math.abs(dx)+Math.abs(dy)<8)return;
+    it.moved=true;
+    // Find which panel we're over
+    const panels=it.area.querySelectorAll('.panel');
+    panels.forEach(p=>{
+      p.classList.remove('drag-over');
+      const r=p.getBoundingClientRect();
+      if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+        if(p.dataset.pid!==it.pid)p.classList.add('drag-over');
+      }
+    });
+  }
+});
+
+document.addEventListener('mouseup',e=>{
+  if(interaction){
+    if(interaction.type==='edge-connect-drag'){
+      // Find target node under cursor
+      const targetEl=document.elementFromPoint(e.clientX,e.clientY);
+      const tg=targetEl&&targetEl.closest&&targetEl.closest('.rf-node');
+      const sourceId=interaction.sourceId;
+      interaction=null;
+      if(tg){
+        const targetId=tg.getAttribute('data-id');
+        if(targetId&&targetId!==sourceId){
+          showPopup(e.clientX,e.clientY,'関係を追加',[{id:'label',ph:'関係ラベル（例：ライバル、師弟）',val:''}],v=>{
+            S.edges.push({id:gid('e'),source:sourceId,target:targetId,label:v.label.trim()||'関係'});
+            connectingFrom=null;render();
+          },()=>{connectingFrom=null;render();});
+          return;
+        }
+      }
+      connectingFrom=null;render();
+      return;
+    }
+    if(interaction.type==='panel-reorder'&&interaction.moved){
+      // Find drop target
+      const panels=interaction.area.querySelectorAll('.panel');
+      let target=null;
+      panels.forEach(p=>{
+        p.classList.remove('drag-over');
+        const r=p.getBoundingClientRect();
+        if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
+          if(p.dataset.pid!==interaction.pid)target=p.dataset.pid;
+        }
+      });
+      if(target){
+        const order=S.panelOrder;
+        const i=order.indexOf(interaction.pid),j=order.indexOf(target);
+        if(i>=0&&j>=0){[order[i],order[j]]=[order[j],order[i]];}
+        render();
+      }
+    }
+    if(interaction.type==='div-v'||interaction.type==='div-h')save();
+    if(interaction.type==='group-drag'||interaction.type==='group-resize'||interaction.type==='node-drag')save();
+    interaction=null;
+  }
+  if(svgPanning){svgPanning=false;svgPanStart=null;}
+});
+
+document.addEventListener('click',e=>{
+  if(!ctxMenu.contains(e.target))hideCtx();
+  if(Date.now()-popupOpenedAt<400)return;
+  if(activePopup&&!activePopup.contains(e.target)){closePopup();}
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(connectingFrom){connectingFrom=null;render();}
+    hideCtx();closePopup();
+  }
+});
+
+/* ===== Export / Download ===== */
+async function downloadPanel(pid){
+  const pDef=PANELS.find(p=>p.id===pid);
+  if(!pDef)return;
+  const workTitle=(S.workInfo.title||'ミリしら妄想').replace(/[\\\/:*?"<>|]/g,'_');
+  const fileName=`${workTitle}_${pDef.title}.png`;
+  let canvas;
+  try{
+    if(pid==='relationship')canvas=await exportRelationshipCanvas();
+    else canvas=await exportHtmlPanelCanvas(pid);
+  }catch(err){console.error(err);alert('画像の生成に失敗しました: '+err.message);return;}
+  if(!canvas){alert('画像を生成できませんでした。');return;}
+  canvas.toBlob(blob=>{
+    if(!blob){alert('画像の書き出しに失敗しました。');return;}
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=fileName;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  },'image/png');
+}
+
+function exportRelationshipCanvas(){
+  const curSvg=document.querySelector('.rf-svg');
+  if(!curSvg){alert('相関図パネルを表示した状態でダウンロードしてください。');return null;}
+
+  // Compute content bounds across nodes, groups, edge labels
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  const consider=(x,y,w,h)=>{minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x+w);maxY=Math.max(maxY,y+h);};
+  S.nodes.forEach(n=>{
+    const rw=Math.max(n.name.length*15+28,90),rh=40;
+    consider(n.x-rw/2,n.y-rh/2,rw,rh);
+  });
+  S.groups.forEach(g=>consider(g.x,g.y,g.w,g.h));
+  const layout=layoutAllEdges();
+  Object.values(layout).forEach(L=>consider(L.lx-L.lw/2,L.ly-11,L.lw,22));
+
+  if(!isFinite(minX)){minX=-200;minY=-100;maxX=600;maxY=300;}
+  const pad=60;
+  minX-=pad;minY-=pad;maxX+=pad;maxY+=pad;
+  const w=Math.max(400,Math.round(maxX-minX)),h=Math.max(300,Math.round(maxY-minY));
+
+  const cloned=curSvg.cloneNode(true);
+  cloned.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  cloned.setAttribute('viewBox',`${minX} ${minY} ${w} ${h}`);
+  cloned.setAttribute('width',String(w));
+  cloned.setAttribute('height',String(h));
+  cloned.removeAttribute('class');
+
+  // Strip interaction-only geometry
+  cloned.querySelectorAll('.rf-handle,.rf-edge-hit,.rf-group-hit,.rf-group-resize,.rf-temp-line').forEach(e=>e.remove());
+
+  // Replace CSS var() fills with concrete colors
+  cloned.querySelectorAll('rect,ellipse,text,path').forEach(e=>{
+    const f=e.getAttribute('fill');
+    if(f&&f.startsWith('var(')){
+      if(f.includes('node-bg'))e.setAttribute('fill','#2a2a4e');
+      else if(f.includes('bg-panel'))e.setAttribute('fill','#0f3460');
+      else e.setAttribute('fill','#2a2a4e');
+    }
+  });
+
+  // Inline stylesheet inside the SVG so it renders standalone
+  const styleEl=document.createElementNS('http://www.w3.org/2000/svg','style');
+  styleEl.textContent=`
+    .rf-node text{font-family:Georgia,'Yu Mincho','Meiryo',serif;font-size:15px;dominant-baseline:central;text-anchor:middle;fill:#fff;}
+    .rf-node-rect{stroke-width:2;}
+    .rf-edge-vis{fill:none;stroke-width:2;}
+    .rf-edge text{font-family:'Segoe UI','Meiryo',sans-serif;font-size:12px;dominant-baseline:central;text-anchor:middle;}
+    .rf-edge-bg{opacity:0.95;}
+    .rf-group-label{font-family:Georgia,'Yu Mincho','Meiryo',serif;font-size:16px;font-weight:bold;dominant-baseline:hanging;text-anchor:start;}
+  `;
+  cloned.insertBefore(styleEl,cloned.firstChild);
+
+  // Background rect
+  const bgRect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bgRect.setAttribute('x',String(minX));
+  bgRect.setAttribute('y',String(minY));
+  bgRect.setAttribute('width',String(w));
+  bgRect.setAttribute('height',String(h));
+  bgRect.setAttribute('fill','#152848');
+  cloned.insertBefore(bgRect,styleEl.nextSibling);
+
+  const xml=new XMLSerializer().serializeToString(cloned);
+  const svg64='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const targetMax=2200;
+      const scale=Math.max(2,Math.min(3,targetMax/Math.max(w,h)));
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.round(w*scale);
+      canvas.height=Math.round(h*scale);
+      const ctx=canvas.getContext('2d');
+      ctx.fillStyle='#152848';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      resolve(canvas);
+    };
+    img.onerror=e=>{console.error('svg img load failed',e);resolve(null);};
+    img.src=svg64;
+  });
+}
+
+async function exportHtmlPanelCanvas(pid){
+  if(typeof html2canvas==='undefined'){
+    alert('画像生成ライブラリの読み込みに失敗しました。オンライン接続を確認してください。');
+    return null;
+  }
+  const wrapper=document.createElement('div');
+  const bgMap={characters:'#1a3a2e',story:'#3a1f2e',memo:'#3a2e18'};
+  wrapper.style.cssText=`position:fixed;left:-10000px;top:0;width:960px;padding:28px;background:${bgMap[pid]||'#0f3460'};color:#e0e0e0;font-family:'Segoe UI','Meiryo',sans-serif;box-sizing:border-box;`;
+
+  const pDef=PANELS.find(p=>p.id===pid);
+  const head=document.createElement('div');
+  head.style.cssText='border-bottom:2px solid #c9a84c;padding-bottom:12px;margin-bottom:20px;';
+  const title=document.createElement('div');
+  title.style.cssText='font-family:Georgia,serif;font-size:28px;color:#c9a84c;';
+  title.textContent=pDef.icon+' '+pDef.title;
+  head.appendChild(title);
+  if(S.workInfo.title){
+    const sub=document.createElement('div');
+    sub.style.cssText='font-size:14px;color:#a0a0b0;margin-top:4px;';
+    sub.textContent='作品：'+S.workInfo.title;
+    head.appendChild(sub);
+  }
+  wrapper.appendChild(head);
+
+  const body=document.createElement('div');
+  if(pid==='characters')buildCharactersExport(body);
+  else if(pid==='story')buildStoryExport(body);
+  else if(pid==='memo')buildMemoExport(body);
+  wrapper.appendChild(body);
+
+  document.body.appendChild(wrapper);
+  try{
+    await document.fonts?.ready;
+    const canvas=await html2canvas(wrapper,{backgroundColor:null,scale:2,logging:false,useCORS:true});
+    return canvas;
+  }finally{
+    wrapper.remove();
+  }
+}
+
+function buildCharactersExport(container){
+  if(S.characters.length===0){
+    const e=document.createElement('div');
+    e.style.cssText='color:#a0a0b0;text-align:center;padding:40px;font-size:16px;';
+    e.textContent='（キャラクター未登録）';
+    container.appendChild(e);return;
+  }
+  S.characters.forEach(ch=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:#1a1a3e;border:1px solid #3a3a5e;border-radius:6px;padding:16px;margin-bottom:12px;';
+    const top=document.createElement('div');
+    top.style.cssText='display:flex;gap:10px;align-items:center;margin-bottom:10px;';
+    const name=document.createElement('div');
+    name.style.cssText='flex:1;font-size:24px;font-weight:bold;font-family:Georgia,serif;color:#e0e0e0;padding-bottom:6px;border-bottom:2px solid #3a3a5e;';
+    name.textContent=ch.name||'（名前未設定）';
+    top.appendChild(name);
+    const role=document.createElement('div');
+    role.style.cssText='padding:6px 12px;font-size:14px;background:#16213e;color:#c9a84c;border:1px solid #3a3a5e;border-radius:6px;white-space:nowrap;';
+    role.textContent=(ROLES.find(r=>r.v===ch.role)||ROLES[0]).l;
+    top.appendChild(role);
+    card.appendChild(top);
+    const desc=document.createElement('div');
+    desc.style.cssText='padding:12px 14px;font-size:17px;line-height:1.75;background:#16213e;color:#e0e0e0;border:1px solid #3a3a5e;border-radius:6px;white-space:pre-wrap;word-break:break-word;min-height:40px;';
+    if(ch.description&&ch.description.trim()){desc.textContent=ch.description;}
+    else{desc.textContent='（説明なし）';desc.style.opacity='0.4';}
+    card.appendChild(desc);
+    container.appendChild(card);
+  });
+}
+
+function buildStoryExport(container){
+  const blocks=[
+    {key:'ki',label:'起',desc:'始まり・導入'},
+    {key:'sho',label:'承',desc:'展開・事件'},
+    {key:'ten',label:'転',desc:'転換・クライマックス'},
+    {key:'ketsu',label:'結',desc:'結末・まとめ'},
+  ];
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:14px;';
+  blocks.forEach(b=>{
+    const blk=document.createElement('div');
+    blk.style.cssText='background:#1a1a3e;border:1px solid #3a3a5e;border-radius:6px;overflow:hidden;';
+    const hdr=document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 14px;background:#16213e;border-bottom:1px solid #3a3a5e;';
+    const lbl=document.createElement('span');
+    lbl.style.cssText='font-family:Georgia,serif;font-size:28px;font-weight:bold;color:#c9a84c;';
+    lbl.textContent=b.label;
+    hdr.appendChild(lbl);
+    const d=document.createElement('span');
+    d.style.cssText='font-size:13px;color:#a0a0b0;';
+    d.textContent=b.desc;
+    hdr.appendChild(d);
+    blk.appendChild(hdr);
+    const bd=document.createElement('div');
+    bd.style.cssText='padding:16px;font-size:18px;line-height:1.85;color:#e0e0e0;white-space:pre-wrap;word-break:break-word;min-height:140px;';
+    if(S.story[b.key]&&S.story[b.key].trim()){bd.textContent=S.story[b.key];}
+    else{bd.textContent='（未記入）';bd.style.opacity='0.35';}
+    blk.appendChild(bd);
+    grid.appendChild(blk);
+  });
+  container.appendChild(grid);
+}
+
+function buildMemoExport(container){
+  if(S.memos.length===0){
+    const e=document.createElement('div');
+    e.style.cssText='color:#a0a0b0;text-align:center;padding:40px;font-size:16px;';
+    e.textContent='（メモなし）';
+    container.appendChild(e);return;
+  }
+  const typeStyles={
+    memo:{color:'#ffb74d',bg:'rgba(255,183,77,0.1)'},
+    quote:{color:'#40c4ff',bg:'rgba(64,196,255,0.1)'},
+    question:{color:'#69f0ae',bg:'rgba(105,240,174,0.1)'},
+  };
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:12px;';
+  S.memos.forEach(m=>{
+    const ti=MEMO_TYPES.find(t=>t.id===m.type)||MEMO_TYPES[0];
+    const st=typeStyles[m.type]||typeStyles.memo;
+    const card=document.createElement('div');
+    card.style.cssText=`padding:14px;border-radius:6px;background:${st.bg};border:1px solid #3a3a5e;border-left:4px solid ${st.color};`;
+    const lbl=document.createElement('div');
+    lbl.style.cssText=`font-size:12px;font-weight:bold;color:${st.color};margin-bottom:6px;`;
+    lbl.textContent=ti.label;
+    card.appendChild(lbl);
+    const txt=document.createElement('div');
+    txt.style.cssText='font-size:15px;color:#e0e0e0;line-height:1.7;white-space:pre-wrap;word-break:break-word;min-height:40px;';
+    if(m.text&&m.text.trim()){txt.textContent=m.text;}
+    else{txt.textContent='（空）';txt.style.opacity='0.4';}
+    card.appendChild(txt);
+    grid.appendChild(card);
+  });
+  container.appendChild(grid);
+}
+
+/* ===== Init ===== */
+if(hasSavedData()){
+  load(); // start with default, welcome screen will offer choice
+  S.screen='welcome';
+}else{
+  load();
+}
+render();
+</script>
+</body>
+</html>
